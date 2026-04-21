@@ -16,6 +16,7 @@ services:
       - mysql_data:/var/lib/mysql
 
   api:
+    build: .
     image: cth-backend
     container_name: cth-api
     depends_on:

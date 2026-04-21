@@ -103,13 +103,6 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- TEMPORAL -->
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-
         <dependency>
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>

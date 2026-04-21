@@ -1,0 +1,9 @@
+package ar.edu.unq.backend.favorite;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
+
+public interface FavoriteRepository extends JpaRepository<Favorite, Integer> {
+
+}
+
