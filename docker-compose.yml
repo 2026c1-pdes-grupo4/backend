@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: cth-mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE: cth
+      MYSQL_USER: cth
+      MYSQL_PASSWORD: 1234
+      MYSQL_ROOT_PASSWORD: rootpass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  api:
+    image: cth-backend
+    container_name: cth-api
+    depends_on:
+      - mysql
+    environment:
+      SPRING_PROFILES_ACTIVE: mysql
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/cth?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&sslMode=DISABLED
+      SPRING_DATASOURCE_USERNAME: cth
+      SPRING_DATASOURCE_PASSWORD: 1234
+    ports:
+      - "8080:8080"
+
+volumes:
+  mysql_data:

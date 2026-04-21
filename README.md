@@ -1,0 +1,41 @@
+# CTH Backend API
+
+API REST desarrollada con **Spring Boot 3**, **MySQL 8.4** y **JWT**.
+
+---
+
+## Requisitos
+
+- Docker instalado y corriendo
+- Maven 
+- Java 17+
+
+---
+
+## Levantar el proyecto con Docker
+
+### 1. Compilar el proyecto
+
+```bash
+mvn clean package -DskipTests
+```
+
+Esto genera el archivo `target/cth-0.0.1-SNAPSHOT.jar`.
+
+### 2. Levantar los contenedores
+
+```bash
+docker-compose up --build
+```
+
+Esto levanta dos servicios:
+- **cth-mysql**:  MySQL en el puerto `3306`
+- **cth-api**: la API en el puerto `8080`
+
+---
+
+la API está disponible en:
+
+```
+http://localhost:8080
+```
