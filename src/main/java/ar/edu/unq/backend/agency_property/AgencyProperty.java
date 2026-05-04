@@ -1,4 +1,4 @@
-package ar.edu.unq.backend.listing;
+package ar.edu.unq.backend.agency_property;
 
 import ar.edu.unq.backend.agency.Agency;
 import ar.edu.unq.backend.property.Property;
@@ -33,7 +33,6 @@ public class AgencyProperty {
     @Column(name = "listed_price", nullable = false)
     private Double listedPrice;
 
-    @Column(nullable = false)
-    private Boolean active = true;
+    @Column(name = "available", nullable = false)
+    private Boolean available = true;
 }
-

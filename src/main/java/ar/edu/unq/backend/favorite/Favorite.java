@@ -1,6 +1,6 @@
 package ar.edu.unq.backend.favorite;
 
-import ar.edu.unq.backend.property.Property;
+import ar.edu.unq.backend.agency_property.AgencyProperty;
 import ar.edu.unq.backend.user.User;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -11,7 +11,7 @@ import java.time.LocalDate;
 @Setter
 @Getter
 @Entity
-@Table(name = "favorite", uniqueConstraints = {@UniqueConstraint(columnNames = {"user_id", "property_id"})})
+@Table(name = "favorite", uniqueConstraints = {@UniqueConstraint(columnNames = {"user_id", "agency_property_id"})})
 public class Favorite {
 
     @Id
@@ -24,8 +24,8 @@ public class Favorite {
     private User user;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "property_id")
-    private Property property;
+    @JoinColumn(name = "agency_property_id")
+    private AgencyProperty agencyProperty;
 
     @Column(name = "saved_date")
     private LocalDate savedDate;

@@ -2,11 +2,17 @@ package ar.edu.unq.backend.property;
 
 import ar.edu.unq.backend.property.dto.PropertyRequestDTO;
 import ar.edu.unq.backend.property.dto.PropertyResponseDTO;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.util.List;
 
+/**
+ * Servicio que gestiona el ciclo de vida de las propiedades inmobiliarias.
+ */
 @Service
 public class PropertyService {
 
@@ -18,44 +24,79 @@ public class PropertyService {
         this.propertyMapper = propertyMapper;
     }
 
+    /**
+     * Devuelve la lista de todas las propiedades registradas.
+     *
+     * @return lista de propiedades como DTOs de respuesta
+     */
     public List<PropertyResponseDTO> findAll() {
-        return propertyMapper.toResponseList(propertyRepository.findAll());
+        return propertyRepository.findAll()
+                        .stream()
+                        .map(propertyMapper::toResponse)
+                        .toList();
     }
 
+    /**
+     * Busca una propiedad por el id.
+     *
+     * @param id identificador de la propiedad
+     * @return la propiedad encontrada como DTO de respuesta
+     * @throws ResponseStatusException 404 si la propiedad no existe
+     */
     public PropertyResponseDTO findById(Integer id) {
-        return propertyMapper.toResponse(findEntityById(id));
+        Property property = propertyRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Property not found"));
+
+        return propertyMapper.toResponse(property);
     }
 
+    /**
+     * Crea y persiste una nueva propiedad.
+     *
+     * @param dto datos de la propiedad a crear
+     * @return la propiedad creada como DTO de respuesta
+     */
     @Transactional
     public PropertyResponseDTO create(PropertyRequestDTO dto) {
-        validate(dto);
         Property p = propertyMapper.toEntity(dto);
-        if (p.getAvailable() == null) p.setAvailable(true);
+
         return propertyMapper.toResponse(propertyRepository.save(p));
     }
 
+    /**
+     * Actualiza los datos de una propiedad existente.
+     *
+     * @param id  identificador de la propiedad a actualizar
+     * @param dto nuevos datos de la propiedad
+     * @return la propiedad actualizada como DTO de respuesta
+     * @throws ResponseStatusException 404 si la propiedad no existe.
+     */
     @Transactional
     public PropertyResponseDTO update(Integer id, PropertyRequestDTO dto) {
-        validate(dto);
-        Property existing = findEntityById(id);
+        Property existing = propertyRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Property not found"));
+
         propertyMapper.updateEntity(dto, existing);
+
         return propertyMapper.toResponse(propertyRepository.save(existing));
     }
 
+    /**
+     * Elimina una propiedad por el id.
+     *
+     * @param id identificador de la propiedad a eliminar
+     */
     @Transactional
     public void delete(Integer id) {
-        propertyRepository.deleteById(id);
+        Property property = propertyRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Property not found"));
+
+        propertyRepository.delete(property);
     }
 
-    private Property findEntityById(Integer id) {
-        return propertyRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Propiedad no encontrada: " + id));
-    }
-
-    private void validate(PropertyRequestDTO p) {
-        if (p.getPropertyType() == null) throw new RuntimeException("propertyType es requerido");
-        if (p.getPrice() != null && p.getPrice() < 0) throw new RuntimeException("price debe ser >= 0");
-        if (p.getRooms() != null && p.getRooms() < 0) throw new RuntimeException("rooms deben ser >= 0");
-        if (p.getAreaSq() != null && p.getAreaSq() < 0) throw new RuntimeException("areaSq debe ser >= 0");
+    // TODO: implementar búsqueda avanzada con filtros opcionales
+    public List<PropertyResponseDTO> search(String city, String province, String propertyType, Integer rooms,
+            BigDecimal priceMin, BigDecimal priceMax, String keyword) {
+        return List.of();
     }
 }

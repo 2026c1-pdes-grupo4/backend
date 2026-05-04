@@ -19,8 +19,6 @@ public class Property {
     @Column(name = "property_type", nullable = false)
     private PropertyType propertyType;
 
-    private Double price;
-
     private String address;
 
     private String city;
@@ -34,5 +32,11 @@ public class Property {
 
     private String description;
 
-    private Boolean available = true;
+    private String circumscription;
+
+    private String section;
+
+    private String block;
+
+    private String parcel;
 }

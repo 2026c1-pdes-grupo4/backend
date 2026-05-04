@@ -5,8 +5,8 @@ import ar.edu.unq.backend.agency.Agency;
 import ar.edu.unq.backend.agency.AgencyRepository;
 import ar.edu.unq.backend.favorite.Favorite;
 import ar.edu.unq.backend.favorite.FavoriteRepository;
-import ar.edu.unq.backend.listing.AgencyProperty;
-import ar.edu.unq.backend.listing.AgencyPropertyRepository;
+import ar.edu.unq.backend.agency_property.AgencyProperty;
+import ar.edu.unq.backend.agency_property.AgencyPropertyRepository;
 import ar.edu.unq.backend.property.Property;
 import ar.edu.unq.backend.property.PropertyRepository;
 import ar.edu.unq.backend.property.PropertyType;
@@ -51,7 +51,7 @@ public class DataInitializer {
             buyer.setEmail("buyer1@cth.com");
             buyer.setPassword(encoder.encode("buyer123"));
             buyer.setProfileType(ProfileType.BUYER);
-            userRepository.save(buyer);
+            buyer = userRepository.save(buyer);
 
             Agency agency = new Agency();
             agency.setUsername("inmo3");
@@ -62,14 +62,17 @@ public class DataInitializer {
 
             Property house = new Property();
             house.setPropertyType(PropertyType.HOUSE);
-            house.setPrice(120000.0);
-            house.setCity("CABA");
+            house.setCity("Buenos Aires");
             house.setProvince("Buenos Aires");
-            house.setAddress("Av. Calle 123");
+            house.setAddress("123 Main Street");
             house.setRooms(3);
             house.setAreaSq(85.0);
-            house.setDescription("Casa luminosa");
+            house.setDescription("Bright and spacious house");
             house.setAvailable(true);
+            house.setCircumscription("1");
+            house.setSection("A");
+            house.setBlock("10");
+            house.setParcel("5");
             house = propertyRepository.save(house);
 
             AgencyProperty listing = new AgencyProperty();
@@ -77,16 +80,15 @@ public class DataInitializer {
             listing.setProperty(house);
             listing.setListedPrice(115000.0);
             listing.setListedDate(LocalDate.now());
-            listing.setActive(true);
             listing = agencyPropertyRepository.save(listing);
 
             Favorite favorite = new Favorite();
             favorite.setUser(buyer);
-            favorite.setProperty(house);
+            favorite.setAgencyProperty(listing);
             favorite.setSavedDate(LocalDate.now());
-            favorite.setSavedPrice(house.getPrice());
+            favorite.setSavedPrice(listing.getListedPrice());
             favorite.setScore(8);
-            favorite.setComment("Buena ubicación y precio");
+            favorite.setComment("Great location and price");
             favoriteRepository.save(favorite);
 
             Purchase purchase = new Purchase();
@@ -96,7 +98,7 @@ public class DataInitializer {
             purchase.setPurchaseDate(LocalDate.now());
             purchaseRepository.save(purchase);
 
-            System.out.println("data cargada");
+            System.out.println("Seed data loaded");
         };
     }
 }

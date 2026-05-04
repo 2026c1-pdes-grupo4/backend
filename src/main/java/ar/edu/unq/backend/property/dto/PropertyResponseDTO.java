@@ -8,9 +8,8 @@ import lombok.Setter;
 @Setter
 public class PropertyResponseDTO {
 
-    private Integer propertyId;
+    private Integer id;
     private PropertyType propertyType;
-    private Double price;
     private String address;
     private String city;
     private String province;
@@ -18,6 +17,8 @@ public class PropertyResponseDTO {
     private Integer rooms;
     private String description;
     private Boolean available;
-
+    private String circumscription;
+    private String section;
+    private String block;
+    private String parcel;
 }
-
