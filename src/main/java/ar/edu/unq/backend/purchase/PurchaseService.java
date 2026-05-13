@@ -51,7 +51,7 @@ public class PurchaseService {
         AgencyProperty agencyProperty = agencyPropertyRepository.findById(dto.getAgencyPropertyId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Agency property not found"));
 
-        if (!agencyProperty.getAvailable()) {
+        if (!agencyProperty.getProperty().getAvailable()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Property already sold");
         }
 
@@ -61,7 +61,7 @@ public class PurchaseService {
         purchase.setPurchasePrice(agencyProperty.getListedPrice());
         purchase.setPurchaseDate(LocalDate.now());
 
-        agencyProperty.setAvailable(false);
+        agencyProperty.getProperty().setAvailable(false);
 
         purchaseRepository.save(purchase);
         agencyPropertyRepository.save(agencyProperty);

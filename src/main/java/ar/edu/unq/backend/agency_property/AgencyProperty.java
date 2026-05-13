@@ -32,7 +32,4 @@ public class AgencyProperty {
 
     @Column(name = "listed_price", nullable = false)
     private Double listedPrice;
-
-    @Column(name = "available", nullable = false)
-    private Boolean available = true;
 }

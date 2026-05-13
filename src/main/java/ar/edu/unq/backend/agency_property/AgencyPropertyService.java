@@ -5,7 +5,6 @@ import ar.edu.unq.backend.agency.AgencyRepository;
 import ar.edu.unq.backend.auth.JwtAuthUtils;
 import ar.edu.unq.backend.property.Property;
 import ar.edu.unq.backend.property.PropertyRepository;
-import ar.edu.unq.backend.purchase.PurchaseRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -61,7 +60,7 @@ public class AgencyPropertyService {
         ap.setProperty(property);
         ap.setListedPrice(dto.getListedPrice().doubleValue());
         ap.setListedDate(LocalDate.now());
-        ap.setAvailable(true);
+        ap.getProperty().setAvailable(true);
 
         return agencyPropertyMapper.mapToResponse(agencyPropertyRepository.save(ap));
     }
@@ -139,7 +138,7 @@ public class AgencyPropertyService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot delete another agency publication");
         }
 
-        if (!ap.getAvailable()) {
+        if (!ap.getProperty().getAvailable()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot delete a sold publication");
         }
 

@@ -11,13 +11,16 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface PropertyMapper {
 
+    @Mapping(target = "id", source = "propertyId")
     PropertyResponseDTO toResponse(Property property);
 
     List<PropertyResponseDTO> toResponseList(List<Property> properties);
 
     @Mapping(target = "propertyId", ignore = true)
+    @Mapping(target = "available", ignore = true)
     Property toEntity(PropertyRequestDTO dto);
 
+    @Mapping(target = "available", ignore = true)
     @Mapping(target = "propertyId", ignore = true)
     void updateEntity(PropertyRequestDTO dto, @MappingTarget Property property);
 

@@ -12,6 +12,7 @@ public interface AgencyPropertyMapper {
     @Mapping(target = "city", source = "property.city")
     @Mapping(target = "propertyType", source = "property.propertyType")
     @Mapping(target = "agencyId", source = "agency.agencyId")
-    @Mapping(target = "agencyName", source = "agency.name")
+    @Mapping(target = "agencyName", source = "agency.username")
+    @Mapping(target = "available", source = "property.available")
     AgencyPropertyResponseDTO mapToResponse(AgencyProperty save);
 }

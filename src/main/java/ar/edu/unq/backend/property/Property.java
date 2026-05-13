@@ -39,4 +39,6 @@ public class Property {
     private String block;
 
     private String parcel;
+
+    private Boolean available;
 }
