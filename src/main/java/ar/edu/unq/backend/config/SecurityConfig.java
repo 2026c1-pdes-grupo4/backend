@@ -22,19 +22,13 @@ public class SecurityConfig {
 
         http
                 .cors(Customizer.withDefaults())
+                .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm ->
                         sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/agency/**").hasRole("AGENCY")
-                        .requestMatchers(HttpMethod.GET, "/properties/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/properties/**").hasAnyRole("ADMIN", "AGENCY")
-                        .requestMatchers(HttpMethod.PUT, "/properties/**").hasAnyRole("ADMIN", "AGENCY")
-                        .requestMatchers(HttpMethod.DELETE, "/properties/**").hasAnyRole("ADMIN", "AGENCY")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)

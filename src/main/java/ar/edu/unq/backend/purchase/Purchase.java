@@ -1,6 +1,6 @@
 package ar.edu.unq.backend.purchase;
 
-import ar.edu.unq.backend.listing.AgencyProperty;
+import ar.edu.unq.backend.agency_property.AgencyProperty;
 import ar.edu.unq.backend.user.User;
 import jakarta.persistence.*;
 import lombok.Getter;

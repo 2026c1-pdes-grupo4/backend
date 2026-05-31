@@ -9,14 +9,14 @@ import lombok.Setter;
 public class PropertyRequestDTO {
 
     private PropertyType propertyType;
-    private Double price;
     private String address;
     private String city;
     private String province;
     private Double areaSq;
     private Integer rooms;
     private String description;
-    private Boolean available;
-
+    private String circumscription;
+    private String section;
+    private String block;
+    private String parcel;
 }
-
