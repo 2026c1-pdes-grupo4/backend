@@ -1,9 +1,15 @@
 package ar.edu.unq.backend.agency;
 
-import org.springframework.http.HttpStatus;
+import ar.edu.unq.backend.auth.JwtAuthUtils;
+import ar.edu.unq.backend.common.error.ErrorCode;
+import ar.edu.unq.backend.common.exception.ConflictException;
+import ar.edu.unq.backend.common.exception.NotFoundException;
+import ar.edu.unq.backend.user.User;
+import ar.edu.unq.backend.user.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -13,12 +19,22 @@ import java.util.List;
 @Service
 public class AgencyService {
 
+    private static final Logger log = LoggerFactory.getLogger(AgencyService.class);
+
     private final AgencyRepository agencyRepository;
+    private final UserRepository userRepository;
+    private final JwtAuthUtils jwtAuthUtils;
     private final PasswordEncoder passwordEncoder;
     private final AgencyMapper agencyMapper;
 
-    public AgencyService(AgencyRepository agencyRepository, PasswordEncoder passwordEncoder, AgencyMapper agencyMapper) {
+    public AgencyService(AgencyRepository agencyRepository,
+                         UserRepository userRepository,
+                         JwtAuthUtils jwtAuthUtils,
+                         PasswordEncoder passwordEncoder,
+                         AgencyMapper agencyMapper) {
         this.agencyRepository = agencyRepository;
+        this.userRepository = userRepository;
+        this.jwtAuthUtils = jwtAuthUtils;
         this.passwordEncoder = passwordEncoder;
         this.agencyMapper = agencyMapper;
     }
@@ -28,22 +44,32 @@ public class AgencyService {
      *
      * @param dto datos de la agencia a crear
      * @return la agencia creada como DTO de respuesta
-     * @throws ResponseStatusException 400 si el username o email ya están registrados
+     * @throws RuntimeException si el username o email ya están registrados
      */
     public AgencyResponseDTO create(AgencyRequestDTO dto) {
 
         if (agencyRepository.existsByUsername(dto.getUsername())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username already exists");
+            log.warn("Rejecting agency creation: username already exists. username={}", dto.getUsername());
+            throw new ConflictException(ErrorCode.USERNAME_ALREADY_EXISTS, "Username already exists");
         }
 
         if (agencyRepository.existsByEmail(dto.getEmail())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email already exists");
+            log.warn("Rejecting agency creation: email already exists. email={}", dto.getEmail());
+            throw new ConflictException(ErrorCode.EMAIL_ALREADY_EXISTS, "Email already exists");
         }
+
+        Integer adminId = jwtAuthUtils.getCurrentId();
+        User adminUser = userRepository.findById(adminId)
+                .orElseThrow(() -> {
+                    log.warn("Admin user not found for agency creation. adminId={}", adminId);
+                    return new NotFoundException(ErrorCode.ADMIN_USER_NOT_FOUND, "Admin user not found");
+                });
 
         Agency agency = new Agency();
         agency.setUsername(dto.getUsername());
         agency.setEmail(dto.getEmail());
         agency.setPassword(passwordEncoder.encode(dto.getPassword()));
+        agency.setAdminUser(adminUser);
 
         return agencyMapper.mapToResponse(agencyRepository.save(agency));
     }
@@ -65,11 +91,14 @@ public class AgencyService {
      *
      * @param id identificador de la agencia
      * @return la agencia encontrada como DTO de respuesta
-     * @throws ResponseStatusException 404 si la agencia no existe
+     * @throws RuntimeException si la agencia no existe
      */
     public AgencyResponseDTO findById(Integer id) {
         Agency agency = agencyRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Agency not found"));
+                .orElseThrow(() -> {
+                    log.warn("Agency not found. agencyId={}", id);
+                    return new NotFoundException(ErrorCode.AGENCY_NOT_FOUND, "Agency not found");
+                });
 
         return agencyMapper.mapToResponse(agency);
     }
@@ -81,19 +110,24 @@ public class AgencyService {
      * @param id  identificador de la agencia a actualizar
      * @param dto nuevos datos de la agencia
      * @return la agencia actualizada como DTO de respuesta
-     * @throws ResponseStatusException 404 si la agencia no existe,
+     * @throws RuntimeException si la agencia no existe,
      *                                 400 si el nuevo username o email ya están en uso
      */
     public AgencyResponseDTO update(Integer id, AgencyRequestDTO dto) {
         Agency agency = agencyRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Agency not found"));
+                .orElseThrow(() -> {
+                    log.warn("Cannot update agency because it does not exist. agencyId={}", id);
+                    return new NotFoundException(ErrorCode.AGENCY_NOT_FOUND, "Agency not found");
+                });
 
         if (!agency.getUsername().equals(dto.getUsername()) && agencyRepository.existsByUsername(dto.getUsername())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username already exists");
+            log.warn("Rejecting agency update: username already exists. agencyId={}, username={}", id, dto.getUsername());
+            throw new ConflictException(ErrorCode.USERNAME_ALREADY_EXISTS, "Username already exists");
         }
 
         if (!agency.getEmail().equals(dto.getEmail()) && agencyRepository.existsByEmail(dto.getEmail())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email already exists");
+            log.warn("Rejecting agency update: email already exists. agencyId={}, email={}", id, dto.getEmail());
+            throw new ConflictException(ErrorCode.EMAIL_ALREADY_EXISTS, "Email already exists");
         }
 
         agency.setUsername(dto.getUsername());
@@ -111,11 +145,14 @@ public class AgencyService {
      * Elimina una agencia por el id.
      *
      * @param id identificador de la agencia a eliminar
-     * @throws ResponseStatusException 404 si la agencia no existe
+     * @throws RuntimeException si la agencia no existe
      */
     public void delete(Integer id) {
         Agency agency = agencyRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Agency not found"));
+                .orElseThrow(() -> {
+                    log.warn("Cannot delete agency because it does not exist. agencyId={}", id);
+                    return new NotFoundException(ErrorCode.AGENCY_NOT_FOUND, "Agency not found");
+                });
 
         agencyRepository.delete(agency);
     }

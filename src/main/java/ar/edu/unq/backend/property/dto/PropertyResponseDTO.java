@@ -4,12 +4,15 @@ import ar.edu.unq.backend.property.PropertyType;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 public class PropertyResponseDTO {
 
     private Integer id;
     private PropertyType propertyType;
+    private Double price;
     private String address;
     private String city;
     private String province;
@@ -21,4 +24,8 @@ public class PropertyResponseDTO {
     private String section;
     private String block;
     private String parcel;
+
+    private BigDecimal listedPrice;
+    private Integer agencyId;
+    private String agencyName;
 }

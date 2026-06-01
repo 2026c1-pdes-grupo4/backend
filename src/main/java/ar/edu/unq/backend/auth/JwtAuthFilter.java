@@ -33,8 +33,7 @@ public class JwtAuthFilter extends GenericFilterBean {
         if (uri.startsWith("/auth")
                 || uri.startsWith("/h2")
                 || uri.startsWith("/swagger-ui")
-                || uri.startsWith("/v3/api-docs")
-                || (req.getMethod().equals("GET") && uri.startsWith("/properties"))) {
+                || uri.startsWith("/v3/api-docs")) {
             chain.doFilter(request, response);
             return;
         }

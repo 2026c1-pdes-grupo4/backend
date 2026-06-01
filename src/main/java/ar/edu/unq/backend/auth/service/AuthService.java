@@ -5,13 +5,15 @@ import ar.edu.unq.backend.agency.AgencyRepository;
 import ar.edu.unq.backend.auth.JwtService;
 import ar.edu.unq.backend.auth.dto.LoginRequest;
 import ar.edu.unq.backend.auth.dto.LoginResponse;
+import ar.edu.unq.backend.common.error.ErrorCode;
+import ar.edu.unq.backend.common.exception.UnauthorizedException;
 import ar.edu.unq.backend.user.ProfileType;
 import ar.edu.unq.backend.user.User;
 import ar.edu.unq.backend.user.UserRepository;
-import org.springframework.http.HttpStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
@@ -22,6 +24,8 @@ import java.util.Map;
  */
 @Service
 public class AuthService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     private final UserRepository userRepository;
     private final AgencyRepository agencyRepository;
@@ -42,7 +46,7 @@ public class AuthService {
      *
      * @param req datos de inicio de sesión (username y contraseña)
      * @return respuesta con el token JWT generado
-     * @throws ResponseStatusException 401 si las credenciales son inválidas
+     * @throws RuntimeException si las credenciales son inválidas
      */
     public LoginResponse login(LoginRequest req) {
         var user = userRepository.findByUsername(req.username());
@@ -51,7 +55,10 @@ public class AuthService {
         }
 
         var agency = agencyRepository.findByUsername(req.username())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
+                .orElseThrow(() -> {
+                    log.warn("Login failed: username not found in users or agencies. username={}", req.username());
+                    return new UnauthorizedException(ErrorCode.INVALID_CREDENTIALS, "Invalid credentials");
+                });
 
         return authenticateAgency(agency, req.password());
     }
@@ -62,7 +69,7 @@ public class AuthService {
      * @param user        entidad del usuario a autenticar
      * @param rawPassword contraseña sin encriptar
      * @return respuesta con el token JWT del usuario
-     * @throws ResponseStatusException 401 si la contraseña no coincide
+     * @throws RuntimeException si la contraseña no coincide
      */
     private LoginResponse authenticateUser(User user, String rawPassword) {
         validatePassword(rawPassword, user.getPassword());
@@ -83,7 +90,7 @@ public class AuthService {
      * @param agency      entidad de la agencia a autenticar
      * @param rawPassword contraseña sin encriptar
      * @return respuesta con el token JWT de la agencia
-     * @throws ResponseStatusException 401 si la contraseña no coincide
+     * @throws RuntimeException si la contraseña no coincide
      */
     private LoginResponse authenticateAgency(Agency agency, String rawPassword) {
         validatePassword(rawPassword, agency.getPassword());
@@ -101,11 +108,12 @@ public class AuthService {
      *
      * @param rawPassword     contraseña sin encriptar
      * @param encodedPassword hash almacenado en base de datos
-     * @throws ResponseStatusException 401 si las contraseñas no coinciden
+     * @throws RuntimeException si las contraseñas no coinciden
      */
     private void validatePassword(String rawPassword, String encodedPassword) {
         if (!encoder.matches(rawPassword, encodedPassword)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+            log.warn("Login failed: password mismatch");
+            throw new UnauthorizedException(ErrorCode.INVALID_CREDENTIALS, "Invalid credentials");
         }
     }
 }

@@ -39,3 +39,38 @@ la API está disponible en:
 ```
 http://localhost:8080
 ```
+
+---
+
+## Tests y cobertura
+
+```bash
+mvn test
+```
+
+Para validar cobertura (JaCoCo, umbral global >= 80%):
+
+```bash
+mvn verify
+```
+
+---
+
+## API Error v1
+
+Formato de error uniforme para frontend:
+
+```json
+{
+  "timestamp": "2026-05-31T20:20:20Z",
+  "status": 400,
+  "error": "Bad Request",
+  "code": "INVALID_REQUEST",
+  "message": "Request validation failed",
+  "path": "/properties/search",
+  "details": ["priceMin > priceMax"]
+}
+```
+
+El catálogo de códigos funcionales está centralizado en `ErrorCode`.
+
