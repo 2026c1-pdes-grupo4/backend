@@ -9,6 +9,7 @@ import lombok.Setter;
 public class PropertyRequestDTO {
 
     private PropertyType propertyType;
+    private Double price;
     private String address;
     private String city;
     private String province;

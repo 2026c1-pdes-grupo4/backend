@@ -3,11 +3,14 @@ package ar.edu.unq.backend.purchase;
 import ar.edu.unq.backend.auth.JwtAuthUtils;
 import ar.edu.unq.backend.agency_property.AgencyProperty;
 import ar.edu.unq.backend.agency_property.AgencyPropertyRepository;
+import ar.edu.unq.backend.common.error.ErrorCode;
+import ar.edu.unq.backend.common.exception.NotFoundException;
+import ar.edu.unq.backend.common.exception.ValidationException;
 import ar.edu.unq.backend.user.User;
 import ar.edu.unq.backend.user.UserRepository;
-import org.springframework.http.HttpStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -17,6 +20,8 @@ import java.util.List;
  */
 @Service
 public class PurchaseService {
+
+    private static final Logger log = LoggerFactory.getLogger(PurchaseService.class);
 
     private final PurchaseRepository purchaseRepository;
     private final AgencyPropertyRepository agencyPropertyRepository;
@@ -39,20 +44,27 @@ public class PurchaseService {
      *
      * @param dto datos de la compra con el id de la publicación
      * @return la compra realizada como DTO de respuesta
-     * @throws ResponseStatusException 404 si el usuario o la publicación no existen,
+     * @throws RuntimeException si el usuario o la publicación no existen,
      *                                 400 si la propiedad ya fue vendida
      */
     public PurchaseResponseDTO buy(PurchaseRequestDTO dto) {
         Integer userId = jwtAuthUtils.getCurrentId();
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> {
+                    log.warn("Cannot register purchase: user not found. userId={}", userId);
+                    return new NotFoundException(ErrorCode.USER_NOT_FOUND, "User not found");
+                });
 
         AgencyProperty agencyProperty = agencyPropertyRepository.findById(dto.getAgencyPropertyId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Agency property not found"));
+                .orElseThrow(() -> {
+                    log.warn("Cannot register purchase: publication not found. agencyPropertyId={}", dto.getAgencyPropertyId());
+                    return new NotFoundException(ErrorCode.AGENCY_PROPERTY_NOT_FOUND, "Agency property not found");
+                });
 
         if (!agencyProperty.getProperty().getAvailable()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Property already sold");
+            log.warn("Rejecting purchase: property already sold. agencyPropertyId={}", dto.getAgencyPropertyId());
+            throw new ValidationException(ErrorCode.PROPERTY_ALREADY_SOLD, "Property already sold");
         }
 
         Purchase purchase = new Purchase();

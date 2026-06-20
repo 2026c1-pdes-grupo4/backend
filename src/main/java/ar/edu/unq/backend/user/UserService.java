@@ -1,9 +1,12 @@
 package ar.edu.unq.backend.user;
 
-import org.springframework.http.HttpStatus;
+import ar.edu.unq.backend.common.error.ErrorCode;
+import ar.edu.unq.backend.common.exception.ConflictException;
+import ar.edu.unq.backend.common.exception.NotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -12,6 +15,8 @@ import java.util.List;
  */
 @Service
 public class UserService {
+
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -28,16 +33,18 @@ public class UserService {
      *
      * @param dto datos del usuario a registrar
      * @return el usuario creado representado como DTO de respuesta
-     * @throws ResponseStatusException 400 si el nombre de usuario o email ya están en uso
+     * @throws RuntimeException si el nombre de usuario o email ya están en uso
      */
     public UserResponseDTO create(UserRequestDTO dto) {
 
         if (userRepository.existsByUsername(dto.getUsername())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username already exists");
+            log.warn("Rejecting user creation: username already exists. username={}", dto.getUsername());
+            throw new ConflictException(ErrorCode.USERNAME_ALREADY_EXISTS, "Username already exists");
         }
 
         if (userRepository.existsByEmail(dto.getEmail())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email already exists");
+            log.warn("Rejecting user creation: email already exists. email={}", dto.getEmail());
+            throw new ConflictException(ErrorCode.EMAIL_ALREADY_EXISTS, "Email already exists");
         }
 
         User user = new User();
@@ -66,11 +73,14 @@ public class UserService {
      *
      * @param id identificador del usuario
      * @return el usuario encontrado como DTO de respuesta
-     * @throws ResponseStatusException 404 si el usuario no existe
+     * @throws RuntimeException si el usuario no existe
      */
     public UserResponseDTO findById(Integer id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> {
+                    log.warn("User not found. userId={}", id);
+                    return new NotFoundException(ErrorCode.USER_NOT_FOUND, "User not found");
+                });
 
         return userMapper.mapToResponse(user);
     }
@@ -82,19 +92,24 @@ public class UserService {
      * @param id  identificador del usuario a actualizar
      * @param dto nuevos datos del usuario
      * @return el usuario actualizado como DTO de respuesta
-     * @throws ResponseStatusException 404 si el usuario no existe,
+     * @throws RuntimeException si el usuario no existe,
      *                                 400 si el nuevo username o email ya están en uso
      */
     public UserResponseDTO update(Integer id, UserRequestDTO dto) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> {
+                    log.warn("Cannot update user because it does not exist. userId={}", id);
+                    return new NotFoundException(ErrorCode.USER_NOT_FOUND, "User not found");
+                });
 
         if (!user.getUsername().equals(dto.getUsername()) && userRepository.existsByUsername(dto.getUsername())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username already exists");
+            log.warn("Rejecting user update: username already exists. userId={}, username={}", id, dto.getUsername());
+            throw new ConflictException(ErrorCode.USERNAME_ALREADY_EXISTS, "Username already exists");
         }
 
         if (!user.getEmail().equals(dto.getEmail()) && userRepository.existsByEmail(dto.getEmail())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email already exists");
+            log.warn("Rejecting user update: email already exists. userId={}, email={}", id, dto.getEmail());
+            throw new ConflictException(ErrorCode.EMAIL_ALREADY_EXISTS, "Email already exists");
         }
 
         user.setUsername(dto.getUsername());
@@ -112,11 +127,14 @@ public class UserService {
      * Elimina un usuario por el id.
      *
      * @param id identificador del usuario a eliminar
-     * @throws ResponseStatusException 404 si el usuario no existe
+     * @throws RuntimeException si el usuario no existe
      */
     public void delete(Integer id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> {
+                    log.warn("Cannot delete user because it does not exist. userId={}", id);
+                    return new NotFoundException(ErrorCode.USER_NOT_FOUND, "User not found");
+                });
 
         userRepository.delete(user);
     }

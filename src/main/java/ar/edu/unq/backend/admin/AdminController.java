@@ -33,23 +33,27 @@ public class AdminController {
 
     @GetMapping("/users")
     public List<UserResponseDTO> users() {
-        // TODO: Consultar usuarios registrados
-        return List.of();
+        return adminService.findAllUsers();
     }
-
 
     @GetMapping("/agencies")
     public List<AgencyResponseDTO> agencies() {
-        // TODO: Consultar agencias registradas
-        return List.of();
+        return adminService.findAllAgencies();
     }
 
-    /*
-    TODO: Obtener reportes de utilización del sistema:
-     - Top 5 usuarios con más compras
-     - Top 5 propiedades mejor rankeadas
-     - Top 5 inmobiliarias con más ventas
-     Ver los puntajes y observaciones de los usuarios
-     */
+    @GetMapping("/reports/top-buyers")
+    public List<TopBuyerDTO> topBuyers() {
+        return adminService.topBuyers();
+    }
+
+    @GetMapping("/reports/top-ranked-properties")
+    public List<TopRankedPropertyDTO> topRankedProperties() {
+        return adminService.topRankedProperties();
+    }
+
+    @GetMapping("/reports/top-agencies-sales")
+    public List<TopAgencySalesDTO> topAgenciesBySales() {
+        return adminService.topAgenciesBySales();
+    }
 
 }

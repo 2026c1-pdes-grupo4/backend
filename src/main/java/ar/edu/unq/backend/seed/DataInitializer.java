@@ -79,31 +79,31 @@ public class DataInitializer {
 
             Property house1 = buildProperty(
                     PropertyType.HOUSE, "123 Main Street", "Buenos Aires", "Buenos Aires",
-                    3, 85.0, "Bright and spacious house",
+                    3, 85.0, 120000.0, "Bright and spacious house",
                     "1", "A", "10", "5");
             house1 = propertyRepository.save(house1);
 
             Property apt1 = buildProperty(
                     PropertyType.APARTMENT, "456 Rivadavia Ave", "Córdoba", "Córdoba",
-                    2, 55.0, "Modern apartment near the city center",
+                    2, 55.0, 78000.0, "Modern apartment near the city center",
                     "2", "B", "20", "3");
             apt1 = propertyRepository.save(apt1);
 
             Property house2 = buildProperty(
                     PropertyType.HOUSE, "789 San Martín Blvd", "Rosario", "Santa Fe",
-                    4, 120.0, "Large family home with garden",
+                    4, 120.0, 190000.0, "Large family home with garden",
                     "3", "C", "30", "7");
             house2 = propertyRepository.save(house2);
 
             Property apt2 = buildProperty(
                     PropertyType.APARTMENT, "321 Pellegrini St", "La Plata", "Buenos Aires",
-                    1, 38.0, "Cozy studio close to university",
+                    1, 38.0, 59000.0, "Cozy studio close to university",
                     "4", "D", "40", "2");
             apt2 = propertyRepository.save(apt2);
 
             Property house3 = buildProperty(
                     PropertyType.HOUSE, "10 Belgrano St", "San Telmo", "Buenos Aires",
-                    5, 200.0, "Spacious heritage house in historic neighborhood",
+                    5, 200.0, 240000.0, "Spacious heritage house in historic neighborhood",
                     "5", "E", "50", "9");
             house3 = propertyRepository.save(house3);
 
@@ -164,7 +164,7 @@ public class DataInitializer {
     // Helpers
 
     private Property buildProperty(PropertyType type, String address, String city,
-                                   String province, int rooms, double area,
+                                   String province, int rooms, double area, double price,
                                    String description, String circumscription,
                                    String section, String block, String parcel) {
         Property p = new Property();
@@ -174,6 +174,7 @@ public class DataInitializer {
         p.setProvince(province);
         p.setRooms(rooms);
         p.setAreaSq(area);
+        p.setPrice(price);
         p.setDescription(description);
         p.setAvailable(true);
         p.setCircumscription(circumscription);
