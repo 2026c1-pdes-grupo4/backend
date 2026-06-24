@@ -18,10 +18,16 @@
     <description>CTH Compra tu Hogar</description>
 
     <properties>
-        <java.version>17</java.version>
+        <java.version>21</java.version>
         <spring-boot.version>3.3.0</spring-boot.version>
         <jjwt.version>0.11.5</jjwt.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
+        <sonar.projectKey>2026c1-pdes-grupo4_backend</sonar.projectKey>
+        <sonar.organization>2026c1-pdes-grupo4</sonar.organization>
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+        <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+        <sonar.exclusions>**/dto/**,**/config/**,**/*Application*,**/seed/**,**/*Repository*,**/*Mapper*,**/auth/Jwt*,**/common/error/**,**/picture/**</sonar.exclusions>
+        <sonar.test.exclusions>**/integration/**</sonar.test.exclusions>
     </properties>
 
 

@@ -8,7 +8,7 @@ API REST desarrollada con **Spring Boot 3**, **MySQL 8.4** y **JWT**.
 
 - Docker instalado y corriendo
 - Maven 
-- Java 17+
+- Java 21+
 
 ---
 
