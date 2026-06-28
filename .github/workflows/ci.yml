@@ -52,12 +52,21 @@ jobs:
     needs: build-and-test
 
     steps:
+      - name: Skip CI analysis while SonarCloud Automatic Analysis is enabled
+        if: ${{ vars.SONAR_CI_ANALYSIS_ENABLED != 'true' }}
+        run: |
+          echo "Skipping CI-based SonarCloud analysis."
+          echo "This project currently uses SonarCloud Automatic Analysis, which conflicts with mvn sonar:sonar."
+          echo "Disable Automatic Analysis in SonarCloud and set SONAR_CI_ANALYSIS_ENABLED=true to re-enable this step."
+
       - name: Checkout (full history)
+        if: ${{ vars.SONAR_CI_ANALYSIS_ENABLED == 'true' }}
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Set up JDK 21
+        if: ${{ vars.SONAR_CI_ANALYSIS_ENABLED == 'true' }}
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -65,6 +74,7 @@ jobs:
           cache: maven
 
       - name: Run SonarCloud analysis
+        if: ${{ vars.SONAR_CI_ANALYSIS_ENABLED == 'true' }}
         run: mvn -B verify sonar:sonar
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
