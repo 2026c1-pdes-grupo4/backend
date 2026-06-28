@@ -2,13 +2,16 @@ name: Backend CI/CD
 
 on:
   push:
-    branches: [ "main", "master", "develop" ]
+    branches: ["main", "develop"]
   pull_request:
 
 jobs:
 
+  # ─────────────────────────────────────────────
+  # Job 1 — Build & Test
+  # ─────────────────────────────────────────────
   build-and-test:
-    name: Build & Test
+    name: "Job 1 — Build & Test"
     runs-on: ubuntu-latest
 
     steps:
@@ -25,6 +28,13 @@ jobs:
       - name: Build, test and coverage check
         run: mvn -B verify
 
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-jar
+          path: target/*.jar
+          retention-days: 1
+
       - name: Upload JaCoCo report
         if: always()
         uses: actions/upload-artifact@v4
@@ -33,8 +43,11 @@ jobs:
           path: target/site/jacoco/
           retention-days: 7
 
+  # ─────────────────────────────────────────────
+  # Job 2 — SonarCloud Analysis
+  # ─────────────────────────────────────────────
   sonarcloud:
-    name: SonarCloud Analysis
+    name: "Job 2 — SonarCloud Analysis"
     runs-on: ubuntu-latest
     needs: build-and-test
 
@@ -55,3 +68,123 @@ jobs:
         run: mvn -B verify sonar:sonar
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  # ─────────────────────────────────────────────
+  # Job 3 — Load Tests (k6)
+  # ─────────────────────────────────────────────
+  load-tests:
+    name: "Job 3 — Load Tests (k6)"
+    runs-on: ubuntu-latest
+    needs: build-and-test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download JAR artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-jar
+          path: target/
+
+      - name: Build Docker image
+        run: docker build -t cth-backend .
+
+      - name: Start application stack
+        run: docker compose up -d
+
+      - name: Wait for API to be ready
+        run: |
+          echo "Waiting for API..."
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8080/actuator/health > /dev/null 2>&1; then
+              echo "✅ API ready after ${i} attempts"
+              break
+            fi
+            echo "  Attempt $i/30 — retrying in 5s..."
+            sleep 5
+          done
+
+      - name: k6 — Load Auth
+        run: |
+          docker run --rm --network host \
+            -v ${{ github.workspace }}/k6:/scripts \
+            grafana/k6 run /scripts/load-auth.js \
+            --env BASE_URL=http://localhost:8080
+
+      - name: k6 — Load Search
+        run: |
+          docker run --rm --network host \
+            -v ${{ github.workspace }}/k6:/scripts \
+            grafana/k6 run /scripts/load-search.js \
+            --env BASE_URL=http://localhost:8080
+
+      - name: k6 — Stress Purchase
+        run: |
+          docker run --rm --network host \
+            -v ${{ github.workspace }}/k6:/scripts \
+            grafana/k6 run /scripts/stress-purchase.js \
+            --env BASE_URL=http://localhost:8080
+
+      - name: Stop stack
+        if: always()
+        run: docker compose down -v
+
+  # ─────────────────────────────────────────────
+  # Job 4 — Push Image to GHCR
+  # ─────────────────────────────────────────────
+  push-image:
+    name: "Job 4 — Push Image to GHCR"
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download JAR artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-jar
+          path: target/
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=sha,prefix=
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=develop,enable=${{ github.ref == 'refs/heads/develop' }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  # ─────────────────────────────────────────────
+  # Job 5 — Deploy (placeholder)
+  # ─────────────────────────────────────────────
+  deploy:
+    name: "Job 5 — Deploy (placeholder)"
+    runs-on: ubuntu-latest
+    needs: push-image
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Deploy placeholder
+        run: |
+          echo "🚀 Deploy step pending — configure target environment"
+          echo "Image: ghcr.io/${{ github.repository }}:${{ github.sha }}"
