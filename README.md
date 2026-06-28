@@ -142,7 +142,9 @@ mvn verify sonar:sonar \
   -Dsonar.token=<TU_TOKEN>
 ```
 
-En CI, el análisis se envía automáticamente a **SonarCloud** usando el secret `SONAR_TOKEN`.
+En SonarCloud, este proyecto usa **Automatic Analysis**. El job de CI sólo ejecuta `mvn sonar:sonar`
+si el repositorio define `SONAR_CI_ANALYSIS_ENABLED=true`, pensado para usarlo después de desactivar
+Automatic Analysis en SonarCloud.
 
 ---
 
@@ -204,7 +206,7 @@ hotfix/*    ← fixes urgentes (salen de main)
 feature/* ──► PR ──► develop ──► PR ──► main
                                     │
                                dispara pipeline completo
-                               (build + sonar + k6 + push + deploy)
+                               (build + sonar opcional + k6 + push + deploy)
 ```
 
 ---
@@ -246,4 +248,3 @@ Formato de error uniforme para el frontend:
 ```
 
 El catálogo de códigos funcionales está centralizado en `ErrorCode.java`.
-
