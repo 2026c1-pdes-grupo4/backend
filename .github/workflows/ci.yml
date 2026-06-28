@@ -68,6 +68,7 @@ jobs:
         run: mvn -B verify sonar:sonar
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_CI_ANALYSIS_ENABLED: "true"
 
   # ─────────────────────────────────────────────
   # Job 3 — Load Tests (k6)
