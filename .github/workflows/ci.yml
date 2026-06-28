@@ -107,28 +107,38 @@ jobs:
       - name: Start application stack
         run: docker compose up -d
 
+      - name: Show initial container status
+        run: |
+          echo "=== Containers ==="
+          docker compose ps
+          echo "=== MySQL logs ==="
+          docker compose logs mysql --tail=20
+          echo "=== API logs ==="
+          docker compose logs api --tail=30
+
       - name: Wait for API to be ready
         run: |
-          echo "Waiting for API..."
-          for i in $(seq 1 30); do
-            if curl -sf http://localhost:8080/actuator/health > /dev/null 2>&1; then
+          echo "Waiting for API (max 5 min)..."
+          for i in $(seq 1 60); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/actuator/health 2>/dev/null || echo "000")
+            if [ "$STATUS" = "200" ]; then
               echo "✅ API ready after ${i} attempts"
+              echo "Waiting 15s for DataInitializer to seed data..."
+              sleep 15
               break
             fi
-            echo "  Attempt $i/30 — retrying in 5s..."
+            if [ $i -eq 60 ]; then
+              echo "❌ API never became ready. Last HTTP status: ${STATUS}"
+              docker compose ps
+              docker compose logs api
+              exit 1
+            fi
+            echo "  Attempt $i/60 (HTTP ${STATUS}) — retrying in 5s..."
             sleep 5
           done
 
       - name: Install k6
-        run: |
-          sudo gpg --no-default-keyring \
-            --keyring /usr/share/keyrings/k6-archive-keyring.gpg \
-            --keyserver hkp://keyserver.ubuntu.com:80 \
-            --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
-          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" \
-            | sudo tee /etc/apt/sources.list.d/k6.list
-          sudo apt-get update -qq
-          sudo apt-get install -y k6
+        uses: grafana/setup-k6-action@v1
 
       - name: k6 — Load Auth
         run: k6 run k6/load-auth.js --env BASE_URL=http://localhost:8080
