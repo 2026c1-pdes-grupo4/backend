@@ -55,7 +55,7 @@ jobs:
     needs: build-and-test
 
     steps:
-      - name: Skip CI analysis while SonarCloud Automatic Analysis is enabled
+      - name: Explain why SonarCloud CI analysis is skipped
         if: ${{ vars.SONAR_CI_ANALYSIS_ENABLED != 'true' }}
         run: |
           echo "Skipping CI-based SonarCloud analysis."
