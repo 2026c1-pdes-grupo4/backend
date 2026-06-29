@@ -52,18 +52,18 @@ public class PurchaseService {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> {
-                    log.warn("Cannot register purchase: user not found. userId={}", userId);
+                    log.error("Cannot register purchase: user not found. userId={}", userId);
                     return new NotFoundException(ErrorCode.USER_NOT_FOUND, "User not found");
                 });
 
         AgencyProperty agencyProperty = agencyPropertyRepository.findById(dto.getAgencyPropertyId())
                 .orElseThrow(() -> {
-                    log.warn("Cannot register purchase: publication not found. agencyPropertyId={}", dto.getAgencyPropertyId());
+                    log.error("Cannot register purchase: publication not found. agencyPropertyId={}", dto.getAgencyPropertyId());
                     return new NotFoundException(ErrorCode.AGENCY_PROPERTY_NOT_FOUND, "Agency property not found");
                 });
 
         if (!agencyProperty.getProperty().getAvailable()) {
-            log.warn("Rejecting purchase: property already sold. agencyPropertyId={}", dto.getAgencyPropertyId());
+            log.error("Rejecting purchase: property already sold. agencyPropertyId={}", dto.getAgencyPropertyId());
             throw new ValidationException(ErrorCode.PROPERTY_ALREADY_SOLD, "Property already sold");
         }
 
@@ -78,6 +78,8 @@ public class PurchaseService {
         purchaseRepository.save(purchase);
         agencyPropertyRepository.save(agencyProperty);
 
+        log.info("Purchase registered. userId={}, agencyPropertyId={}, price={}",
+                userId, dto.getAgencyPropertyId(), purchase.getPurchasePrice());
         return purchaseMapper.mapToResponse(purchase);
     }
 

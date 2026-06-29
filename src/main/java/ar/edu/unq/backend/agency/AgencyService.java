@@ -49,19 +49,19 @@ public class AgencyService {
     public AgencyResponseDTO create(AgencyRequestDTO dto) {
 
         if (agencyRepository.existsByUsername(dto.getUsername())) {
-            log.warn("Rejecting agency creation: username already exists. username={}", dto.getUsername());
+            log.error("Rejecting agency creation: username already exists. username={}", dto.getUsername());
             throw new ConflictException(ErrorCode.USERNAME_ALREADY_EXISTS, "Username already exists");
         }
 
         if (agencyRepository.existsByEmail(dto.getEmail())) {
-            log.warn("Rejecting agency creation: email already exists. email={}", dto.getEmail());
+            log.error("Rejecting agency creation: email already exists. email={}", dto.getEmail());
             throw new ConflictException(ErrorCode.EMAIL_ALREADY_EXISTS, "Email already exists");
         }
 
         Integer adminId = jwtAuthUtils.getCurrentId();
         User adminUser = userRepository.findById(adminId)
                 .orElseThrow(() -> {
-                    log.warn("Admin user not found for agency creation. adminId={}", adminId);
+                    log.error("Admin user not found for agency creation. adminId={}", adminId);
                     return new NotFoundException(ErrorCode.ADMIN_USER_NOT_FOUND, "Admin user not found");
                 });
 
@@ -71,7 +71,9 @@ public class AgencyService {
         agency.setPassword(passwordEncoder.encode(dto.getPassword()));
         agency.setAdminUser(adminUser);
 
-        return agencyMapper.mapToResponse(agencyRepository.save(agency));
+        AgencyResponseDTO result = agencyMapper.mapToResponse(agencyRepository.save(agency));
+        log.info("Agency created. agencyId={}, username={}, createdBy=adminId={}", result.getId(), dto.getUsername(), adminId);
+        return result;
     }
 
     /**
@@ -96,7 +98,7 @@ public class AgencyService {
     public AgencyResponseDTO findById(Integer id) {
         Agency agency = agencyRepository.findById(id)
                 .orElseThrow(() -> {
-                    log.warn("Agency not found. agencyId={}", id);
+                    log.error("Agency not found. agencyId={}", id);
                     return new NotFoundException(ErrorCode.AGENCY_NOT_FOUND, "Agency not found");
                 });
 
@@ -116,17 +118,17 @@ public class AgencyService {
     public AgencyResponseDTO update(Integer id, AgencyRequestDTO dto) {
         Agency agency = agencyRepository.findById(id)
                 .orElseThrow(() -> {
-                    log.warn("Cannot update agency because it does not exist. agencyId={}", id);
+                    log.error("Cannot update agency because it does not exist. agencyId={}", id);
                     return new NotFoundException(ErrorCode.AGENCY_NOT_FOUND, "Agency not found");
                 });
 
         if (!agency.getUsername().equals(dto.getUsername()) && agencyRepository.existsByUsername(dto.getUsername())) {
-            log.warn("Rejecting agency update: username already exists. agencyId={}, username={}", id, dto.getUsername());
+            log.error("Rejecting agency update: username already exists. agencyId={}, username={}", id, dto.getUsername());
             throw new ConflictException(ErrorCode.USERNAME_ALREADY_EXISTS, "Username already exists");
         }
 
         if (!agency.getEmail().equals(dto.getEmail()) && agencyRepository.existsByEmail(dto.getEmail())) {
-            log.warn("Rejecting agency update: email already exists. agencyId={}, email={}", id, dto.getEmail());
+            log.error("Rejecting agency update: email already exists. agencyId={}, email={}", id, dto.getEmail());
             throw new ConflictException(ErrorCode.EMAIL_ALREADY_EXISTS, "Email already exists");
         }
 
@@ -138,7 +140,9 @@ public class AgencyService {
             agency.setPassword(passwordEncoder.encode(dto.getPassword()));
         }
 
-        return agencyMapper.mapToResponse(agencyRepository.save(agency));
+        AgencyResponseDTO result = agencyMapper.mapToResponse(agencyRepository.save(agency));
+        log.info("Agency updated. agencyId={}, username={}", id, dto.getUsername());
+        return result;
     }
 
     /**
@@ -150,10 +154,11 @@ public class AgencyService {
     public void delete(Integer id) {
         Agency agency = agencyRepository.findById(id)
                 .orElseThrow(() -> {
-                    log.warn("Cannot delete agency because it does not exist. agencyId={}", id);
+                    log.error("Cannot delete agency because it does not exist. agencyId={}", id);
                     return new NotFoundException(ErrorCode.AGENCY_NOT_FOUND, "Agency not found");
                 });
 
         agencyRepository.delete(agency);
+        log.info("Agency deleted. agencyId={}", id);
     }
 }

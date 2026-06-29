@@ -14,9 +14,10 @@
       "title": "Request Rate (req/s)",
       "type": "timeseries",
       "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "datasource": { "type": "prometheus", "uid": "prometheus-cth" },
       "targets": [
         {
+          "datasource": { "type": "prometheus", "uid": "prometheus-cth" },
           "expr": "sum(rate(http_server_requests_seconds_count{application=\"cth\"}[1m])) by (uri, method)",
           "legendFormat": "{{method}} {{uri}}",
           "refId": "A"
@@ -34,10 +35,11 @@
       "title": "Error Rate (%)",
       "type": "timeseries",
       "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "datasource": { "type": "prometheus", "uid": "prometheus-cth" },
       "targets": [
         {
-          "expr": "100 * sum(rate(http_server_requests_seconds_count{application=\"cth\",outcome=\"SERVER_ERROR\"}[1m])) / sum(rate(http_server_requests_seconds_count{application=\"cth\"}[1m]))",
+          "datasource": { "type": "prometheus", "uid": "prometheus-cth" },
+          "expr": "100 * (sum(rate(http_server_requests_seconds_count{application=\"cth\",outcome=\"SERVER_ERROR\"}[1m])) or vector(0)) / sum(rate(http_server_requests_seconds_count{application=\"cth\"}[1m]))",
           "legendFormat": "Error Rate %",
           "refId": "A"
         }
@@ -80,14 +82,16 @@
       "title": "P95 Response Time (ms)",
       "type": "timeseries",
       "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "datasource": { "type": "prometheus", "uid": "prometheus-cth" },
       "targets": [
         {
+          "datasource": { "type": "prometheus", "uid": "prometheus-cth" },
           "expr": "histogram_quantile(0.95, sum by(le) (rate(http_server_requests_seconds_bucket{application=\"cth\"}[1m]))) * 1000",
           "legendFormat": "p95",
           "refId": "A"
         },
         {
+          "datasource": { "type": "prometheus", "uid": "prometheus-cth" },
           "expr": "histogram_quantile(0.50, sum by(le) (rate(http_server_requests_seconds_bucket{application=\"cth\"}[1m]))) * 1000",
           "legendFormat": "p50 (median)",
           "refId": "B"
@@ -105,9 +109,10 @@
       "title": "Active HTTP Requests",
       "type": "stat",
       "gridPos": { "x": 12, "y": 8, "w": 6, "h": 4 },
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "datasource": { "type": "prometheus", "uid": "prometheus-cth" },
       "targets": [
         {
+          "datasource": { "type": "prometheus", "uid": "prometheus-cth" },
           "expr": "sum(http_server_requests_seconds_count{application=\"cth\"})",
           "legendFormat": "Total Requests",
           "refId": "A"
@@ -129,9 +134,10 @@
       "title": "JVM Memory Used",
       "type": "timeseries",
       "gridPos": { "x": 18, "y": 8, "w": 6, "h": 4 },
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "datasource": { "type": "prometheus", "uid": "prometheus-cth" },
       "targets": [
         {
+          "datasource": { "type": "prometheus", "uid": "prometheus-cth" },
           "expr": "jvm_memory_used_bytes{application=\"cth\", area=\"heap\"}",
           "legendFormat": "Heap Used",
           "refId": "A"
@@ -149,36 +155,20 @@
       "title": "Application Logs",
       "type": "logs",
       "gridPos": { "x": 0, "y": 16, "w": 24, "h": 10 },
-      "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+      "datasource": { "type": "loki", "uid": "loki-cth" },
       "targets": [
         {
+          "datasource": { "type": "loki", "uid": "loki-cth" },
           "expr": "{app=\"cth\"}",
           "refId": "A"
         }
       ],
       "options": {
         "showTime": true,
-        "showLabels": false,
+        "showLabels": true,
         "wrapLogMessage": true,
         "sortOrder": "Descending"
       }
     }
-  ],
-  "templating": {
-    "list": [
-      {
-        "name": "DS_PROMETHEUS",
-        "type": "datasource",
-        "pluginId": "prometheus",
-        "hide": 2
-      },
-      {
-        "name": "DS_LOKI",
-        "type": "datasource",
-        "pluginId": "loki",
-        "hide": 2
-      }
-    ]
-  }
+  ]
 }
-

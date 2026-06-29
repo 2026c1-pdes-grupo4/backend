@@ -54,20 +54,20 @@ public class AgencyPropertyService {
 
         Agency agency = agencyRepository.findById(agencyId)
                 .orElseThrow(() -> {
-                    log.warn("Cannot publish property: agency not found. agencyId={}", agencyId);
+                    log.error("Cannot publish property: agency not found. agencyId={}", agencyId);
                     return new NotFoundException(ErrorCode.AGENCY_NOT_FOUND, "Agency not found");
                 });
 
         Property property = propertyRepository.findById(dto.getPropertyId())
                 .orElseThrow(() -> {
-                    log.warn("Cannot publish property: property not found. propertyId={}", dto.getPropertyId());
+                    log.error("Cannot publish property: property not found. propertyId={}", dto.getPropertyId());
                     return new NotFoundException(ErrorCode.PROPERTY_NOT_FOUND, "Property not found");
                 });
 
         validateListedPrice(dto);
 
         if (agencyPropertyRepository.existsByAgency_AgencyIdAndProperty_PropertyId(agencyId, property.getPropertyId())) {
-            log.warn("Rejecting publication: already published by agency. agencyId={}, propertyId={}", agencyId, property.getPropertyId());
+            log.error("Rejecting publication: already published by agency. agencyId={}, propertyId={}", agencyId, property.getPropertyId());
             throw new ConflictException(ErrorCode.PUBLICATION_ALREADY_EXISTS_FOR_AGENCY, "Property already published by this agency");
         }
 
@@ -91,7 +91,7 @@ public class AgencyPropertyService {
     public AgencyPropertyResponseDTO findById(Integer id) {
         AgencyProperty ap = agencyPropertyRepository.findById(id)
                 .orElseThrow(() -> {
-                    log.warn("Agency publication not found. agencyPropertyId={}", id);
+                    log.error("Agency publication not found. agencyPropertyId={}", id);
                     return new NotFoundException(
                             ErrorCode.AGENCY_PROPERTY_NOT_FOUND, "Agency property not found");
                 });
@@ -128,12 +128,12 @@ public class AgencyPropertyService {
 
         AgencyProperty ap = agencyPropertyRepository.findById(id)
                 .orElseThrow(() -> {
-                    log.warn("Cannot update publication price: publication not found. agencyPropertyId={}", id);
+                    log.error("Cannot update publication price: publication not found. agencyPropertyId={}", id);
                     return new NotFoundException(ErrorCode.AGENCY_PROPERTY_NOT_FOUND, "Agency property not found");
                 });
 
         if (!ap.getAgency().getAgencyId().equals(agencyId)) {
-            log.warn("Rejecting publication price update: ownership mismatch. agencyPropertyId={}, requesterAgencyId={}, ownerAgencyId={}",
+            log.error("Rejecting publication price update: ownership mismatch. agencyPropertyId={}, requesterAgencyId={}, ownerAgencyId={}",
                     id, agencyId, ap.getAgency().getAgencyId());
             throw new ForbiddenException(ErrorCode.CANNOT_MODIFY_OTHER_PUBLICATION, "Cannot modify another agency publication");
         }
@@ -159,18 +159,18 @@ public class AgencyPropertyService {
 
         AgencyProperty ap = agencyPropertyRepository.findById(id)
                 .orElseThrow(() -> {
-                    log.warn("Cannot delete publication: publication not found. agencyPropertyId={}", id);
+                    log.error("Cannot delete publication: publication not found. agencyPropertyId={}", id);
                     return new NotFoundException(ErrorCode.AGENCY_PROPERTY_NOT_FOUND, "Agency property not found");
                 });
 
         if (!ap.getAgency().getAgencyId().equals(agencyId)) {
-            log.warn("Rejecting publication delete: ownership mismatch. agencyPropertyId={}, requesterAgencyId={}, ownerAgencyId={}",
+            log.error("Rejecting publication delete: ownership mismatch. agencyPropertyId={}, requesterAgencyId={}, ownerAgencyId={}",
                     id, agencyId, ap.getAgency().getAgencyId());
             throw new ForbiddenException(ErrorCode.CANNOT_DELETE_OTHER_PUBLICATION, "Cannot delete another agency publication");
         }
 
         if (!ap.getProperty().getAvailable()) {
-            log.warn("Rejecting publication delete: publication already sold. agencyPropertyId={}", id);
+            log.error("Rejecting publication delete: publication already sold. agencyPropertyId={}", id);
             throw new ValidationException(ErrorCode.SOLD_PUBLICATION_CANNOT_BE_DELETED, "Cannot delete a sold publication");
         }
 
@@ -179,7 +179,7 @@ public class AgencyPropertyService {
 
     private void validateListedPrice(AgencyPropertyRequestDTO dto) {
         if (dto.getListedPrice() == null || dto.getListedPrice().doubleValue() <= 0) {
-            log.warn("Rejecting publication operation: listedPrice must be > 0. listedPrice={}", dto.getListedPrice());
+            log.error("Rejecting publication operation: listedPrice must be > 0. listedPrice={}", dto.getListedPrice());
             throw new ValidationException(
                     ErrorCode.INVALID_REQUEST,
                     "listedPrice must be greater than zero",

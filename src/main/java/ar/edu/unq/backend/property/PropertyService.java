@@ -58,7 +58,7 @@ public class PropertyService {
     public PropertyResponseDTO findById(Integer id) {
         Property property = propertyRepository.findById(id)
                 .orElseThrow(() -> {
-                    log.warn("Property not found. propertyId={}", id);
+                    log.error("Property not found. propertyId={}", id);
                     return new NotFoundException(ErrorCode.PROPERTY_NOT_FOUND, "Property not found");
                 });
 
@@ -76,7 +76,9 @@ public class PropertyService {
         Property p = propertyMapper.toEntity(dto);
         p.setAvailable(true);
 
-        return propertyMapper.toResponse(propertyRepository.save(p));
+        PropertyResponseDTO result = propertyMapper.toResponse(propertyRepository.save(p));
+        log.info("Property created. propertyId={}", result.getId());
+        return result;
     }
 
     /**
@@ -91,13 +93,15 @@ public class PropertyService {
     public PropertyResponseDTO update(Integer id, PropertyRequestDTO dto) {
         Property existing = propertyRepository.findById(id)
                 .orElseThrow(() -> {
-                    log.warn("Cannot update property because it does not exist. propertyId={}", id);
+                    log.error("Cannot update property because it does not exist. propertyId={}", id);
                     return new NotFoundException(ErrorCode.PROPERTY_NOT_FOUND, "Property not found");
                 });
 
         propertyMapper.updateEntity(dto, existing);
 
-        return propertyMapper.toResponse(propertyRepository.save(existing));
+        PropertyResponseDTO result = propertyMapper.toResponse(propertyRepository.save(existing));
+        log.info("Property updated. propertyId={}", id);
+        return result;
     }
 
     /**
@@ -109,17 +113,18 @@ public class PropertyService {
     public void delete(Integer id) {
         Property property = propertyRepository.findById(id)
                 .orElseThrow(() -> {
-                    log.warn("Cannot delete property because it does not exist. propertyId={}", id);
+                    log.error("Cannot delete property because it does not exist. propertyId={}", id);
                     return new NotFoundException(ErrorCode.PROPERTY_NOT_FOUND, "Property not found");
                 });
 
         propertyRepository.delete(property);
+        log.info("Property deleted. propertyId={}", id);
     }
 
     public List<PropertyResponseDTO> search(String city, String province, String propertyType, Integer rooms,
             BigDecimal priceMin, BigDecimal priceMax, String keyword) {
         if (priceMin != null && priceMax != null && priceMin.compareTo(priceMax) > 0) {
-            log.warn("Rejecting property search: invalid price range. priceMin={}, priceMax={}", priceMin, priceMax);
+            log.error("Rejecting property search: invalid price range. priceMin={}, priceMax={}", priceMin, priceMax);
             throw new ValidationException(
                     ErrorCode.INVALID_PRICE_RANGE,
                     "priceMin must be less than or equal to priceMax",
@@ -138,9 +143,13 @@ public class PropertyService {
                 keyword
         );
 
-        return listings.stream()
+        List<PropertyResponseDTO> results = listings.stream()
                 .map(this::toSearchResponse)
                 .toList();
+
+        log.info("Property search completed. resultsCount={}, city={}, province={}, propertyType={}, rooms={}",
+                results.size(), city, province, propertyType, rooms);
+        return results;
     }
 
     private PropertyType parsePropertyType(String propertyType) {
@@ -151,7 +160,7 @@ public class PropertyService {
         try {
             return PropertyType.valueOf(propertyType.trim().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException ex) {
-            log.warn("Rejecting property search: invalid propertyType={}", propertyType);
+            log.error("Rejecting property search: invalid propertyType={}", propertyType);
             throw new ValidationException(
                     ErrorCode.INVALID_PROPERTY_TYPE,
                     "Invalid propertyType",
