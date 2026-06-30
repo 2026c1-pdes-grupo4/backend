@@ -153,7 +153,7 @@ public class AgencyPropertyService {
         ap.setListedPrice(dto.getListedPrice().doubleValue());
 
         AgencyPropertyResponseDTO response = agencyPropertyMapper.mapToResponse(agencyPropertyRepository.save(ap));
-        log.info("Publication price updated successfully. agencyPropertyId={}, newPrice={}", id, dto.getListedPrice());
+        log.info("Publication price updated successfully.");
         return response;
     }
 
@@ -193,7 +193,7 @@ public class AgencyPropertyService {
 
     private void validateListedPrice(AgencyPropertyRequestDTO dto) {
         if (dto.getListedPrice() == null || dto.getListedPrice().doubleValue() <= 0) {
-            log.error("Rejecting publication operation: listedPrice must be > 0. listedPrice={}", dto.getListedPrice());
+            log.error("Rejecting publication operation: listedPrice must be > 0.");
             throw new ValidationException(
                     ErrorCode.INVALID_REQUEST,
                     "listedPrice must be greater than zero",

@@ -38,12 +38,12 @@ public class UserService {
     public UserResponseDTO create(UserRequestDTO dto) {
 
         if (userRepository.existsByUsername(dto.getUsername())) {
-            log.error("Rejecting user creation: username already exists. username={}", dto.getUsername());
+            log.error("Rejecting user creation: username already exists.");
             throw new ConflictException(ErrorCode.USERNAME_ALREADY_EXISTS, "Username already exists");
         }
 
         if (userRepository.existsByEmail(dto.getEmail())) {
-            log.error("Rejecting user creation: email already exists. email={}", dto.getEmail());
+            log.error("Rejecting user creation: email already exists.");
             throw new ConflictException(ErrorCode.EMAIL_ALREADY_EXISTS, "Email already exists");
         }
 
@@ -54,7 +54,7 @@ public class UserService {
         user.setProfileType(dto.getProfileType());
 
         UserResponseDTO result = userMapper.mapToResponse(userRepository.save(user));
-        log.info("User created. userId={}, username={}, profileType={}", result.getId(), dto.getUsername(), dto.getProfileType());
+        log.info("User created.");
         return result;
     }
 
@@ -82,11 +82,11 @@ public class UserService {
     public UserResponseDTO findById(Integer id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> {
-                    log.error("User not found. userId={}", id);
+                    log.error("User not found.");
                     return new NotFoundException(ErrorCode.USER_NOT_FOUND, "User not found");
                 });
 
-        log.info("User found. userId={}, username={}", user.getUserId(), user.getUsername());
+        log.info("User found.");
         return userMapper.mapToResponse(user);
     }
 
@@ -103,17 +103,17 @@ public class UserService {
     public UserResponseDTO update(Integer id, UserRequestDTO dto) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> {
-                    log.error("Cannot update user because it does not exist. userId={}", id);
+                    log.error("Cannot update user because it does not exist.");
                     return new NotFoundException(ErrorCode.USER_NOT_FOUND, "User not found");
                 });
 
         if (!user.getUsername().equals(dto.getUsername()) && userRepository.existsByUsername(dto.getUsername())) {
-            log.error("Rejecting user update: username already exists. userId={}, username={}", id, dto.getUsername());
+            log.error("Rejecting user update: username already exists.");
             throw new ConflictException(ErrorCode.USERNAME_ALREADY_EXISTS, "Username already exists");
         }
 
         if (!user.getEmail().equals(dto.getEmail()) && userRepository.existsByEmail(dto.getEmail())) {
-            log.error("Rejecting user update: email already exists. userId={}, email={}", id, dto.getEmail());
+            log.error("Rejecting user update: email already exists. ");
             throw new ConflictException(ErrorCode.EMAIL_ALREADY_EXISTS, "Email already exists");
         }
 
@@ -126,7 +126,7 @@ public class UserService {
         }
 
         UserResponseDTO result = userMapper.mapToResponse(userRepository.save(user));
-        log.info("User updated. userId={}, username={}", id, dto.getUsername());
+        log.info("User updated.");
         return result;
     }
 
@@ -139,11 +139,11 @@ public class UserService {
     public void delete(Integer id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> {
-                    log.error("Cannot delete user because it does not exist. userId={}", id);
+                    log.error("Cannot delete user because it does not exist.");
                     return new NotFoundException(ErrorCode.USER_NOT_FOUND, "User not found");
                 });
 
         userRepository.delete(user);
-        log.info("User deleted. userId={}", id);
+        log.info("User deleted.");
     }
 }
