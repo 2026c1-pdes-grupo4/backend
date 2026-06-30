@@ -48,8 +48,6 @@ class PurchaseControllerTest {
         return dto;
     }
 
-    // POST /purchases
-
     @Test
     @WithMockUser(roles = "BUYER")
     void buyReturns201WithBody() throws Exception {
@@ -80,8 +78,6 @@ class PurchaseControllerTest {
                 .andExpect(status().isForbidden());
     }
 
-    // GET /purchases/me
-
     @Test
     @WithMockUser(roles = "BUYER")
     void myPurchasesReturns200WithArray() throws Exception {
@@ -103,8 +99,6 @@ class PurchaseControllerTest {
         mockMvc.perform(get("/purchases/me"))
                 .andExpect(status().isForbidden());
     }
-
-    // GET /purchases/agency/me
 
     @Test
     @WithMockUser(roles = "AGENCY")

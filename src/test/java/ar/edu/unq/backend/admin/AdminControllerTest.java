@@ -31,8 +31,6 @@ class AdminControllerTest {
     @MockBean
     private JwtService jwtService;
 
-    // GET /admin/favorites
-
     @Test
     @WithMockUser(roles = "ADMIN")
     void listFavoritesReturns200() throws Exception {
@@ -50,8 +48,6 @@ class AdminControllerTest {
                 .andExpect(status().isForbidden());
     }
 
-    // GET /admin/purchases
-
     @Test
     @WithMockUser(roles = "ADMIN")
     void listPurchasesReturns200() throws Exception {
@@ -61,8 +57,6 @@ class AdminControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
     }
-
-    // GET /admin/users
 
     @Test
     @WithMockUser(roles = "ADMIN")
@@ -87,8 +81,6 @@ class AdminControllerTest {
                 .andExpect(status().isForbidden());
     }
 
-    // GET /admin/agencies
-
     @Test
     @WithMockUser(roles = "ADMIN")
     void agenciesReturns200WithBody() throws Exception {
@@ -105,8 +97,6 @@ class AdminControllerTest {
                 .andExpect(jsonPath("$[0].username").value("inmo_norte"));
     }
 
-    // GET /admin/reports/top-buyers
-
     @Test
     @WithMockUser(roles = "ADMIN")
     void topBuyersReturns200WithBody() throws Exception {
@@ -120,8 +110,6 @@ class AdminControllerTest {
                 .andExpect(jsonPath("$[0].purchases").value(5));
     }
 
-    // GET /admin/reports/top-ranked-properties
-
     @Test
     @WithMockUser(roles = "ADMIN")
     void topRankedPropertiesReturns200WithBody() throws Exception {
@@ -134,8 +122,6 @@ class AdminControllerTest {
                 .andExpect(jsonPath("$[0].address").value("Av. Del Sol 100"))
                 .andExpect(jsonPath("$[0].averageScore").value(9.5));
     }
-
-    // GET /admin/reports/top-agencies-sales
 
     @Test
     @WithMockUser(roles = "ADMIN")

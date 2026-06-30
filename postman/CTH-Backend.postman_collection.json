@@ -1,0 +1,601 @@
+{
+  "info": {
+    "_postman_id": "cth-backend-collection-v1",
+    "name": "CTH Backend",
+    "description": "Colección completa de endpoints del backend CTH.\n\nFlujo recomendado:\n1. Correr los logins del folder 🔐 Auth para obtener los tokens.\n2. Los tokens se guardan automáticamente en las variables del environment.\n3. Usar los demás requests con el token correcto según el rol requerido.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login como Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    pm.environment.set('adminToken', json.token);",
+                  "    console.log('adminToken guardado:', json.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{adminUser}}\",\n  \"password\": \"{{adminPass}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+            "description": "Login como ADMIN. Guarda automáticamente `adminToken` en el environment."
+          }
+        },
+        {
+          "name": "Login como Buyer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    pm.environment.set('buyerToken', json.token);",
+                  "    console.log('buyerToken guardado:', json.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{buyerUser}}\",\n  \"password\": \"{{buyerPass}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+            "description": "Login como BUYER (buyer1). Guarda automáticamente `buyerToken`."
+          }
+        },
+        {
+          "name": "Login como Buyer2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    pm.environment.set('buyer2Token', json.token);",
+                  "    console.log('buyer2Token guardado:', json.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{buyer2User}}\",\n  \"password\": \"{{buyer2Pass}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+            "description": "Login como BUYER (buyer2). Guarda automáticamente `buyer2Token`."
+          }
+        },
+        {
+          "name": "Login como Agency (inmo1)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    pm.environment.set('agencyToken', json.token);",
+                  "    console.log('agencyToken guardado:', json.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{agencyUser}}\",\n  \"password\": \"{{agencyPass}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+            "description": "Login como AGENCY (inmo1). Guarda automáticamente `agencyToken`."
+          }
+        },
+        {
+          "name": "Login como Agency2 (inmo2)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    pm.environment.set('agency2Token', json.token);",
+                  "    console.log('agency2Token guardado:', json.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{agency2User}}\",\n  \"password\": \"{{agency2Pass}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+            "description": "Login como AGENCY2 (inmo2). Guarda automáticamente `agency2Token`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Reports",
+          "item": [
+            {
+              "name": "Top Buyers",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+                "url": { "raw": "{{baseUrl}}/admin/reports/top-buyers", "host": ["{{baseUrl}}"], "path": ["admin", "reports", "top-buyers"] },
+                "description": "Devuelve los compradores con más compras. Requiere rol ADMIN."
+              }
+            },
+            {
+              "name": "Top Ranked Properties",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+                "url": { "raw": "{{baseUrl}}/admin/reports/top-ranked-properties", "host": ["{{baseUrl}}"], "path": ["admin", "reports", "top-ranked-properties"] },
+                "description": "Devuelve las propiedades con mayor puntaje en favoritos. Requiere rol ADMIN."
+              }
+            },
+            {
+              "name": "Top Agencies by Sales",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+                "url": { "raw": "{{baseUrl}}/admin/reports/top-agencies-sales", "host": ["{{baseUrl}}"], "path": ["admin", "reports", "top-agencies-sales"] },
+                "description": "Devuelve las agencias con más ventas. Requiere rol ADMIN."
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar Favoritos (todos)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/admin/favorites", "host": ["{{baseUrl}}"], "path": ["admin", "favorites"] },
+            "description": "Lista todos los favoritos del sistema. Requiere rol ADMIN."
+          }
+        },
+        {
+          "name": "Listar Compras (todas)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/admin/purchases", "host": ["{{baseUrl}}"], "path": ["admin", "purchases"] },
+            "description": "Lista todas las compras del sistema. Requiere rol ADMIN."
+          }
+        },
+        {
+          "name": "Listar Usuarios (todos)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/admin/users", "host": ["{{baseUrl}}"], "path": ["admin", "users"] },
+            "description": "Lista todos los usuarios. Requiere rol ADMIN."
+          }
+        },
+        {
+          "name": "Listar Agencias (todas)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/admin/agencies", "host": ["{{baseUrl}}"], "path": ["admin", "agencies"] },
+            "description": "Lista todas las agencias. Requiere rol ADMIN."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Usuarios",
+      "item": [
+        {
+          "name": "Crear Usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"nuevobuyer\",\n  \"email\": \"nuevobuyer@cth.com\",\n  \"password\": \"pass123\",\n  \"profileType\": \"BUYER\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/users", "host": ["{{baseUrl}}"], "path": ["users"] },
+            "description": "Crea un nuevo usuario. `profileType` puede ser `BUYER` o `ADMIN`. Requiere rol ADMIN."
+          }
+        },
+        {
+          "name": "Listar Usuarios",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/users", "host": ["{{baseUrl}}"], "path": ["users"] },
+            "description": "Lista todos los usuarios. Requiere rol ADMIN."
+          }
+        },
+        {
+          "name": "Obtener Usuario por ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/users/1", "host": ["{{baseUrl}}"], "path": ["users", "1"] },
+            "description": "Obtiene un usuario por su ID. Requiere rol ADMIN."
+          }
+        },
+        {
+          "name": "Actualizar Usuario",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"buyer1_updated\",\n  \"email\": \"buyer1_updated@cth.com\",\n  \"password\": \"newpass123\",\n  \"profileType\": \"BUYER\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/users/2", "host": ["{{baseUrl}}"], "path": ["users", "2"] },
+            "description": "Actualiza los datos de un usuario. Requiere rol ADMIN."
+          }
+        },
+        {
+          "name": "Eliminar Usuario",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/users/2", "host": ["{{baseUrl}}"], "path": ["users", "2"] },
+            "description": "Elimina un usuario por ID. Requiere rol ADMIN."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Agencias",
+      "item": [
+        {
+          "name": "Crear Agencia",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"nuevainmo\",\n  \"email\": \"nuevainmo@cth.com\",\n  \"password\": \"pass123\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/agencies", "host": ["{{baseUrl}}"], "path": ["agencies"] },
+            "description": "Crea una nueva agencia. Requiere rol ADMIN."
+          }
+        },
+        {
+          "name": "Listar Agencias",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/agencies", "host": ["{{baseUrl}}"], "path": ["agencies"] },
+            "description": "Lista todas las agencias. Requiere rol ADMIN."
+          }
+        },
+        {
+          "name": "Obtener Agencia por ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/agencies/1", "host": ["{{baseUrl}}"], "path": ["agencies", "1"] },
+            "description": "Obtiene una agencia por su ID. Requiere rol ADMIN."
+          }
+        },
+        {
+          "name": "Actualizar Agencia",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"inmo1_updated\",\n  \"email\": \"inmo1_updated@cth.com\",\n  \"password\": \"newpass123\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/agencies/1", "host": ["{{baseUrl}}"], "path": ["agencies", "1"] },
+            "description": "Actualiza los datos de una agencia. Requiere rol ADMIN."
+          }
+        },
+        {
+          "name": "Eliminar Agencia",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/agencies/1", "host": ["{{baseUrl}}"], "path": ["agencies", "1"] },
+            "description": "Elimina una agencia por ID. Requiere rol ADMIN."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Propiedades",
+      "item": [
+        {
+          "name": "Listar Propiedades",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{buyerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/properties", "host": ["{{baseUrl}}"], "path": ["properties"] },
+            "description": "Lista todas las propiedades. Requiere estar autenticado."
+          }
+        },
+        {
+          "name": "Obtener Propiedad por ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{buyerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/properties/1", "host": ["{{baseUrl}}"], "path": ["properties", "1"] },
+            "description": "Obtiene una propiedad por su ID. Requiere estar autenticado."
+          }
+        },
+        {
+          "name": "Buscar Propiedades",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{buyerToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/properties/search?city=Buenos Aires&propertyType=HOUSE&rooms=3&priceMin=50000&priceMax=200000",
+              "host": ["{{baseUrl}}"],
+              "path": ["properties", "search"],
+              "query": [
+                { "key": "city", "value": "Buenos Aires", "description": "Filtrar por ciudad (opcional)" },
+                { "key": "province", "value": "", "description": "Filtrar por provincia (opcional)", "disabled": true },
+                { "key": "propertyType", "value": "HOUSE", "description": "HOUSE o APARTMENT (opcional)" },
+                { "key": "rooms", "value": "3", "description": "Número de habitaciones (opcional)" },
+                { "key": "priceMin", "value": "50000", "description": "Precio mínimo (opcional)" },
+                { "key": "priceMax", "value": "200000", "description": "Precio máximo (opcional)" },
+                { "key": "keyword", "value": "", "description": "Palabra clave en descripción (opcional)", "disabled": true }
+              ]
+            },
+            "description": "Busca propiedades con filtros opcionales. Requiere estar autenticado."
+          }
+        },
+        {
+          "name": "Crear Propiedad",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{agencyToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"propertyType\": \"HOUSE\",\n  \"address\": \"Av. Corrientes 1234\",\n  \"city\": \"Buenos Aires\",\n  \"province\": \"Buenos Aires\",\n  \"rooms\": 3,\n  \"areaSq\": 90.5,\n  \"price\": 150000.0,\n  \"description\": \"Casa luminosa con jardín\",\n  \"circumscription\": \"1\",\n  \"section\": \"A\",\n  \"block\": \"5\",\n  \"parcel\": \"3\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/properties", "host": ["{{baseUrl}}"], "path": ["properties"] },
+            "description": "Crea una nueva propiedad. `propertyType` puede ser `HOUSE` o `APARTMENT`. Requiere rol AGENCY."
+          }
+        },
+        {
+          "name": "Actualizar Propiedad",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{agencyToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"propertyType\": \"HOUSE\",\n  \"address\": \"Av. Corrientes 1234 (actualizado)\",\n  \"city\": \"Buenos Aires\",\n  \"province\": \"Buenos Aires\",\n  \"rooms\": 4,\n  \"areaSq\": 95.0,\n  \"price\": 160000.0,\n  \"description\": \"Casa luminosa con jardín amplio\",\n  \"circumscription\": \"1\",\n  \"section\": \"A\",\n  \"block\": \"5\",\n  \"parcel\": \"3\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/properties/1", "host": ["{{baseUrl}}"], "path": ["properties", "1"] },
+            "description": "Actualiza los datos de una propiedad. Requiere rol AGENCY."
+          }
+        },
+        {
+          "name": "Eliminar Propiedad",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{agencyToken}}" }],
+            "url": { "raw": "{{baseUrl}}/properties/1", "host": ["{{baseUrl}}"], "path": ["properties", "1"] },
+            "description": "Elimina una propiedad por ID. Requiere rol AGENCY."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Publicaciones",
+      "item": [
+        {
+          "name": "Publicar Propiedad",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{agencyToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"propertyId\": 3,\n  \"listedPrice\": 175000.00\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/agency-properties", "host": ["{{baseUrl}}"], "path": ["agency-properties"] },
+            "description": "Publica una propiedad asociándola a la agencia autenticada. Requiere rol AGENCY."
+          }
+        },
+        {
+          "name": "Obtener Publicación por ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{buyerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/agency-properties/1", "host": ["{{baseUrl}}"], "path": ["agency-properties", "1"] },
+            "description": "Obtiene una publicación por su ID. Requiere estar autenticado."
+          }
+        },
+        {
+          "name": "Mis Publicaciones (Agency)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{agencyToken}}" }],
+            "url": { "raw": "{{baseUrl}}/agency-properties/agency/me", "host": ["{{baseUrl}}"], "path": ["agency-properties", "agency", "me"] },
+            "description": "Lista todas las publicaciones de la agencia autenticada. Requiere rol AGENCY."
+          }
+        },
+        {
+          "name": "Actualizar Precio de Publicación",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{agencyToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"listedPrice\": 120000.00\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/agency-properties/1", "host": ["{{baseUrl}}"], "path": ["agency-properties", "1"] },
+            "description": "Actualiza el precio de una publicación. Solo la agencia propietaria puede hacerlo. Requiere rol AGENCY."
+          }
+        },
+        {
+          "name": "Eliminar Publicación",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{agencyToken}}" }],
+            "url": { "raw": "{{baseUrl}}/agency-properties/1", "host": ["{{baseUrl}}"], "path": ["agency-properties", "1"] },
+            "description": "Elimina una publicación. No se puede eliminar si la propiedad fue vendida. Requiere rol AGENCY."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Favoritos",
+      "item": [
+        {
+          "name": "Agregar Favorito",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{buyerToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"agencyPropertyId\": 3,\n  \"score\": 8,\n  \"comment\": \"Me encantó la ubicación\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/favorites", "host": ["{{baseUrl}}"], "path": ["favorites"] },
+            "description": "Agrega una publicación a los favoritos del buyer autenticado. `score` de 0 a 10. Requiere rol BUYER."
+          }
+        },
+        {
+          "name": "Mis Favoritos",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{buyerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/favorites/me", "host": ["{{baseUrl}}"], "path": ["favorites", "me"] },
+            "description": "Lista los favoritos del buyer autenticado. Requiere rol BUYER."
+          }
+        },
+        {
+          "name": "Actualizar Favorito",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{buyerToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"agencyPropertyId\": 1,\n  \"score\": 9,\n  \"comment\": \"Actualicé mi opinión, es excelente\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/favorites/1", "host": ["{{baseUrl}}"], "path": ["favorites", "1"] },
+            "description": "Actualiza un favorito existente. Requiere rol BUYER."
+          }
+        },
+        {
+          "name": "Eliminar Favorito",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{buyerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/favorites/1", "host": ["{{baseUrl}}"], "path": ["favorites", "1"] },
+            "description": "Elimina un favorito por ID. Requiere rol BUYER."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Compras",
+      "item": [
+        {
+          "name": "Comprar Propiedad",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{buyerToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"agencyPropertyId\": 4\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/purchases", "host": ["{{baseUrl}}"], "path": ["purchases"] },
+            "description": "Registra la compra de una propiedad publicada. La propiedad queda marcada como no disponible. Requiere rol BUYER."
+          }
+        },
+        {
+          "name": "Mis Compras (Buyer)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{buyerToken}}" }],
+            "url": { "raw": "{{baseUrl}}/purchases/me", "host": ["{{baseUrl}}"], "path": ["purchases", "me"] },
+            "description": "Lista las compras del buyer autenticado. Requiere rol BUYER."
+          }
+        },
+        {
+          "name": "Ventas de mi Agencia",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{agencyToken}}" }],
+            "url": { "raw": "{{baseUrl}}/purchases/agency/me", "host": ["{{baseUrl}}"], "path": ["purchases", "agency", "me"] },
+            "description": "Lista las ventas realizadas por la agencia autenticada. Requiere rol AGENCY."
+          }
+        }
+      ]
+    }
+  ]
+}
+

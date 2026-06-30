@@ -51,6 +51,7 @@ public class AgencyPropertyService {
      */
     public AgencyPropertyResponseDTO publish(AgencyPropertyRequestDTO dto) {
         Integer agencyId = jwtAuthUtils.getCurrentId();
+        log.info("Publishing property. agencyId={}, propertyId={}", agencyId, dto.getPropertyId());
 
         Agency agency = agencyRepository.findById(agencyId)
                 .orElseThrow(() -> {
@@ -78,7 +79,9 @@ public class AgencyPropertyService {
         ap.setListedDate(LocalDate.now());
         ap.getProperty().setAvailable(true);
 
-        return agencyPropertyMapper.mapToResponse(agencyPropertyRepository.save(ap));
+        AgencyPropertyResponseDTO response = agencyPropertyMapper.mapToResponse(agencyPropertyRepository.save(ap));
+        log.info("Property published successfully. agencyId={}, propertyId={}", agencyId, dto.getPropertyId());
+        return response;
     }
 
     /**
@@ -89,6 +92,7 @@ public class AgencyPropertyService {
      * @throws RuntimeException si la publicación no existe
      */
     public AgencyPropertyResponseDTO findById(Integer id) {
+        log.info("Fetching agency property publication. agencyPropertyId={}", id);
         AgencyProperty ap = agencyPropertyRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Agency publication not found. agencyPropertyId={}", id);
@@ -96,6 +100,7 @@ public class AgencyPropertyService {
                             ErrorCode.AGENCY_PROPERTY_NOT_FOUND, "Agency property not found");
                 });
 
+        log.info("Agency property publication found. agencyPropertyId={}", id);
         return agencyPropertyMapper.mapToResponse(ap);
     }
 
@@ -106,11 +111,15 @@ public class AgencyPropertyService {
      */
     public List<AgencyPropertyResponseDTO> findByCurrentAgency() {
         Integer agencyId = jwtAuthUtils.getCurrentId();
+        log.info("Fetching publications for current agency. agencyId={}", agencyId);
 
-        return agencyPropertyRepository.findByAgency_AgencyId(agencyId)
+        List<AgencyPropertyResponseDTO> result = agencyPropertyRepository.findByAgency_AgencyId(agencyId)
                 .stream()
                 .map(agencyPropertyMapper::mapToResponse)
                 .toList();
+
+        log.info("Publications found for agency. agencyId={}, count={}", agencyId, result.size());
+        return result;
     }
 
     /**
@@ -125,6 +134,7 @@ public class AgencyPropertyService {
      */
     public AgencyPropertyResponseDTO updatePrice(Integer id, AgencyPropertyRequestDTO dto) {
         Integer agencyId = jwtAuthUtils.getCurrentId();
+        log.info("Updating publication price. agencyPropertyId={}, agencyId={}", id, agencyId);
 
         AgencyProperty ap = agencyPropertyRepository.findById(id)
                 .orElseThrow(() -> {
@@ -142,7 +152,9 @@ public class AgencyPropertyService {
 
         ap.setListedPrice(dto.getListedPrice().doubleValue());
 
-        return agencyPropertyMapper.mapToResponse(agencyPropertyRepository.save(ap));
+        AgencyPropertyResponseDTO response = agencyPropertyMapper.mapToResponse(agencyPropertyRepository.save(ap));
+        log.info("Publication price updated successfully. agencyPropertyId={}, newPrice={}", id, dto.getListedPrice());
+        return response;
     }
 
     /**
@@ -156,6 +168,7 @@ public class AgencyPropertyService {
      */
     public void delete(Integer id) {
         Integer agencyId = jwtAuthUtils.getCurrentId();
+        log.info("Deleting publication. agencyPropertyId={}, agencyId={}", id, agencyId);
 
         AgencyProperty ap = agencyPropertyRepository.findById(id)
                 .orElseThrow(() -> {
@@ -175,6 +188,7 @@ public class AgencyPropertyService {
         }
 
         agencyPropertyRepository.delete(ap);
+        log.info("Publication deleted successfully. agencyPropertyId={}", id);
     }
 
     private void validateListedPrice(AgencyPropertyRequestDTO dto) {
