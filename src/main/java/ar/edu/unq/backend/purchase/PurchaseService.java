@@ -90,12 +90,15 @@ public class PurchaseService {
      */
     public List<PurchaseResponseDTO> findForCurrentUser() {
         Integer userId = jwtAuthUtils.getCurrentId();
+        log.info("Fetching purchases for user. ");
 
-        return purchaseRepository.findByUser_UserId(userId)
+        List<PurchaseResponseDTO> result = purchaseRepository.findByUser_UserId(userId)
                 .stream()
                 .map(purchaseMapper::mapToResponse)
                 .toList();
 
+        log.info("Purchases fetched for user. count={}",result.size());
+        return result;
     }
 
     /**
@@ -105,10 +108,14 @@ public class PurchaseService {
      */
     public List<PurchaseResponseDTO> findForCurrentAgency() {
         Integer agencyId = jwtAuthUtils.getCurrentId();
+        log.info("Fetching sales for agency.");
 
-        return purchaseRepository.findByAgencyProperty_Agency_AgencyId(agencyId)
+        List<PurchaseResponseDTO> result = purchaseRepository.findByAgencyProperty_Agency_AgencyId(agencyId)
                 .stream()
                 .map(purchaseMapper::mapToResponse)
                 .toList();
+
+        log.info("Sales fetched for agency. count={}", result.size());
+        return result;
     }
 }

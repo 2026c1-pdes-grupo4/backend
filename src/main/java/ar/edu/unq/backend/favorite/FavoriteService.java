@@ -92,11 +92,15 @@ public class FavoriteService {
      */
     public List<FavoriteResponseDTO> findForCurrentUser() {
         Integer userId = jwtAuthUtils.getCurrentId();
+        log.info("Fetching favorites for user.");
 
-        return favoriteRepository.findByUser_UserId(userId)
+        List<FavoriteResponseDTO> result = favoriteRepository.findByUser_UserId(userId)
                 .stream()
                 .map(favoriteMapper::mapToResponse)
                 .toList();
+
+        log.info("Favorites fetched. count={}", result.size());
+        return result;
     }
 
     /**

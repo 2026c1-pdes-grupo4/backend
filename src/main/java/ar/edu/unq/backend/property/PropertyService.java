@@ -42,10 +42,13 @@ public class PropertyService {
      * @return lista de propiedades como DTOs de respuesta
      */
     public List<PropertyResponseDTO> findAll() {
-        return propertyRepository.findAll()
+        log.info("Fetching all properties.");
+        List<PropertyResponseDTO> result = propertyRepository.findAll()
                         .stream()
                         .map(propertyMapper::toResponse)
                         .toList();
+        log.info("Properties fetched. count={}", result.size());
+        return result;
     }
 
     /**
@@ -56,12 +59,13 @@ public class PropertyService {
      * @throws RuntimeException si la propiedad no existe
      */
     public PropertyResponseDTO findById(Integer id) {
+        log.info("Fetching property.");
         Property property = propertyRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Property not found");
                     return new NotFoundException(ErrorCode.PROPERTY_NOT_FOUND, "Property not found");
                 });
-
+        log.info("Property found.");
         return propertyMapper.toResponse(property);
     }
 

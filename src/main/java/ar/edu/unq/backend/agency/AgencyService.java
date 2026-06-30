@@ -82,10 +82,13 @@ public class AgencyService {
      * @return lista de agencias como DTOs de respuesta
      */
     public List<AgencyResponseDTO> findAll() {
-        return agencyRepository.findAll()
+        log.info("Fetching all agencies.");
+        List<AgencyResponseDTO> result = agencyRepository.findAll()
                 .stream()
                 .map(agencyMapper::mapToResponse)
                 .toList();
+        log.info("Agencies fetched. count={}", result.size());
+        return result;
     }
 
     /**
@@ -96,12 +99,13 @@ public class AgencyService {
      * @throws RuntimeException si la agencia no existe
      */
     public AgencyResponseDTO findById(Integer id) {
+        log.info("Fetching agency.");
         Agency agency = agencyRepository.findById(id)
                 .orElseThrow(() -> {
-                    log.error("Agency not found");
+                    log.error("Agency not found. agencyId={}", id);
                     return new NotFoundException(ErrorCode.AGENCY_NOT_FOUND, "Agency not found");
                 });
-
+        log.info("Agency found.");
         return agencyMapper.mapToResponse(agency);
     }
 

@@ -20,7 +20,7 @@
         <dropRatioOnRetry>0</dropRatioOnRetry>
         <format>
             <label>
-                <pattern>app=${appName},host=${HOSTNAME:-local},level=%level,cid=%X{correlationId:-}</pattern>
+                <pattern>app=${appName},host=${HOSTNAME:-local},level=%level,cid=%X{correlationId:-none}</pattern>
             </label>
             <message>
                 <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
