@@ -129,22 +129,18 @@ Thresholds configurados:
 
 ---
 
-## 📊 SonarQube (local)
+## 📊 SonarCloud
+
+El análisis de calidad se realiza en [SonarCloud](https://sonarcloud.io/summary/new_code?id=2026c1-pdes-grupo4_backend).
+
+La configuración está centralizada en el `pom.xml` (`sonar.projectKey`, `sonar.organization`, `sonar.host.url`).
 
 ```bash
-# Levantar SonarQube local
-docker compose -f docker-compose.sonar.yml up -d
-# UI: http://localhost:9001 (admin/admin)
-
-# Correr análisis apuntando al server local
-mvn verify sonar:sonar \
-  -Dsonar.host.url=http://localhost:9001 \
-  -Dsonar.token=<TU_TOKEN>
+# Correr análisis manualmente (requiere token de SonarCloud)
+mvn clean verify sonar:sonar -Dsonar.token=<TU_TOKEN>
 ```
 
-En SonarCloud, este proyecto usa **Automatic Analysis**. El job de CI sólo ejecuta `mvn sonar:sonar`
-si el repositorio define `SONAR_CI_ANALYSIS_ENABLED=true`, pensado para usarlo después de desactivar
-Automatic Analysis en SonarCloud.
+> 💡 En CI/CD el token se inyecta automáticamente desde el secret `SONAR_TOKEN` del repositorio.
 
 ---
 
@@ -187,7 +183,6 @@ Archivos Docker Compose:
 |---|---|
 | `docker-compose.yml` | App + MySQL |
 | `docker-compose.observability.yml` | Prometheus + Grafana + Loki |
-| `docker-compose.sonar.yml` | SonarQube local |
 
 ---
 
