@@ -54,20 +54,20 @@ public class FavoriteService {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> {
-                    log.warn("Cannot save favorite: user not found. userId={}", userId);
+                    log.error("Cannot save favorite: user not found. userId={}", userId);
                     return new NotFoundException(ErrorCode.USER_NOT_FOUND, "User not found");
                 });
 
         AgencyProperty agencyProperty = agencyPropertyRepository.findById(dto.getAgencyPropertyId())
                 .orElseThrow(() -> {
-                    log.warn("Cannot save favorite: publication not found. agencyPropertyId={}", dto.getAgencyPropertyId());
+                    log.error("Cannot save favorite: publication not found. agencyPropertyId={}", dto.getAgencyPropertyId());
                     return new NotFoundException(ErrorCode.AGENCY_PROPERTY_NOT_FOUND, "Agency property not found");
                 });
 
         validateScore(dto.getScore());
 
         if (favoriteRepository.existsByUser_UserIdAndAgencyProperty_AgencyPropertyId(userId, agencyProperty.getAgencyPropertyId())) {
-            log.warn("Rejecting favorite save: publication already favorited. userId={}, agencyPropertyId={}", userId, agencyProperty.getAgencyPropertyId());
+            log.error("Rejecting favorite save: publication already favorited. userId={}, agencyPropertyId={}", userId, agencyProperty.getAgencyPropertyId());
             throw new ConflictException(ErrorCode.PUBLICATION_ALREADY_FAVORITED, "Publication already saved as favorite");
         }
 
@@ -79,7 +79,10 @@ public class FavoriteService {
         fav.setScore(dto.getScore());
         fav.setComment(dto.getComment());
 
-        return favoriteMapper.mapToResponse(favoriteRepository.save(fav));
+        FavoriteResponseDTO result = favoriteMapper.mapToResponse(favoriteRepository.save(fav));
+        log.info("Favorite saved. favoriteId={}, userId={}, agencyPropertyId={}",
+                result.getId(), userId, dto.getAgencyPropertyId());
+        return result;
     }
 
     /**
@@ -89,11 +92,15 @@ public class FavoriteService {
      */
     public List<FavoriteResponseDTO> findForCurrentUser() {
         Integer userId = jwtAuthUtils.getCurrentId();
+        log.info("Fetching favorites for user.");
 
-        return favoriteRepository.findByUser_UserId(userId)
+        List<FavoriteResponseDTO> result = favoriteRepository.findByUser_UserId(userId)
                 .stream()
                 .map(favoriteMapper::mapToResponse)
                 .toList();
+
+        log.info("Favorites fetched. count={}", result.size());
+        return result;
     }
 
     /**
@@ -111,12 +118,12 @@ public class FavoriteService {
 
         Favorite fav = favoriteRepository.findById(id).orElseThrow(() ->
         {
-            log.warn("Cannot update favorite: favorite not found. favoriteId={}", id);
+            log.error("Cannot update favorite: favorite not found. favoriteId={}", id);
             return new NotFoundException(ErrorCode.FAVORITE_NOT_FOUND, "Favorite not found");
         });
 
         if (!fav.getUser().getUserId().equals(userId)) {
-            log.warn("Rejecting favorite update: ownership mismatch. favoriteId={}, requesterUserId={}, ownerUserId={}",
+            log.error("Rejecting favorite update: ownership mismatch. favoriteId={}, requesterUserId={}, ownerUserId={}",
                     id, userId, fav.getUser().getUserId());
             throw new ForbiddenException(
                     ErrorCode.CANNOT_MODIFY_OTHER_FAVORITE, "Cannot modify another user's favorite");
@@ -127,7 +134,9 @@ public class FavoriteService {
         fav.setScore(dto.getScore());
         fav.setComment(dto.getComment());
 
-        return favoriteMapper.mapToResponse(favoriteRepository.save(fav));
+        FavoriteResponseDTO result = favoriteMapper.mapToResponse(favoriteRepository.save(fav));
+        log.info("Favorite updated. favoriteId={}, userId={}", id, userId);
+        return result;
     }
 
     /**
@@ -143,17 +152,18 @@ public class FavoriteService {
 
         Favorite fav = favoriteRepository.findById(id)
                 .orElseThrow(() -> {
-                    log.warn("Cannot delete favorite: favorite not found. favoriteId={}", id);
+                    log.error("Cannot delete favorite: favorite not found. favoriteId={}", id);
                     return new NotFoundException(ErrorCode.FAVORITE_NOT_FOUND, "Favorite not found");
                 });
 
         if (!fav.getUser().getUserId().equals(userId)) {
-            log.warn("Rejecting favorite delete: ownership mismatch. favoriteId={}, requesterUserId={}, ownerUserId={}",
+            log.error("Rejecting favorite delete: ownership mismatch. favoriteId={}, requesterUserId={}, ownerUserId={}",
                     id, userId, fav.getUser().getUserId());
             throw new ForbiddenException(ErrorCode.CANNOT_DELETE_OTHER_FAVORITE, "Cannot delete another user's favorite");
         }
 
         favoriteRepository.delete(fav);
+        log.info("Favorite deleted. favoriteId={}, userId={}", id, userId);
     }
 
     private void validateScore(Integer score) {
@@ -162,7 +172,7 @@ public class FavoriteService {
         }
 
         if (score < 0 || score > 10) {
-            log.warn("Rejecting favorite score: out of range. score={}", score);
+            log.error("Rejecting favorite score: out of range. score={}", score);
             throw new ValidationException(
                     ErrorCode.INVALID_SCORE,
                     "Score must be between 0 and 10",

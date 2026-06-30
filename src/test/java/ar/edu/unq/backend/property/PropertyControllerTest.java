@@ -39,8 +39,6 @@ class PropertyControllerTest {
     @MockBean
     private JwtService jwtService;
 
-    // GET /properties
-
     @Test
     @WithMockUser
     void listReturns200WithArray() throws Exception {
@@ -62,8 +60,6 @@ class PropertyControllerTest {
                 .andExpect(status().isForbidden());
     }
 
-    // GET /properties/{id}
-
     @Test
     @WithMockUser
     void getReturns200WithBody() throws Exception {
@@ -78,8 +74,6 @@ class PropertyControllerTest {
                 .andExpect(jsonPath("$.id").value(5))
                 .andExpect(jsonPath("$.city").value("Buenos Aires"));
     }
-
-    // POST /properties
 
     @Test
     @WithMockUser(roles = "AGENCY")
@@ -114,8 +108,6 @@ class PropertyControllerTest {
                 .andExpect(status().isForbidden());
     }
 
-    // PUT /properties/{id}
-
     @Test
     @WithMockUser(roles = "AGENCY")
     void updateReturns200WithBody() throws Exception {
@@ -137,8 +129,6 @@ class PropertyControllerTest {
                 .andExpect(jsonPath("$.address").value("Nueva Dirección 1"));
     }
 
-    // DELETE /properties/{id}
-
     @Test
     @WithMockUser(roles = "AGENCY")
     void deleteReturns204() throws Exception {
@@ -156,8 +146,6 @@ class PropertyControllerTest {
         mockMvc.perform(delete("/properties/7").with(csrf()))
                 .andExpect(status().isForbidden());
     }
-
-    // GET /properties/search
 
     @Test
     @WithMockUser

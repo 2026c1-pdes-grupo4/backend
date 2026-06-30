@@ -50,8 +50,6 @@ class FavoriteControllerTest {
         return dto;
     }
 
-    // POST /favorites
-
     @Test
     @WithMockUser(roles = "BUYER")
     void saveReturns201WithBody() throws Exception {
@@ -84,8 +82,6 @@ class FavoriteControllerTest {
                 .andExpect(status().isForbidden());
     }
 
-    // GET /favorites/me
-
     @Test
     @WithMockUser(roles = "BUYER")
     void myFavoritesReturns200WithArray() throws Exception {
@@ -108,8 +104,6 @@ class FavoriteControllerTest {
                 .andExpect(status().isForbidden());
     }
 
-    // PUT /favorites/{id}
-
     @Test
     @WithMockUser(roles = "BUYER")
     void updateReturns200WithBody() throws Exception {
@@ -131,8 +125,6 @@ class FavoriteControllerTest {
                 .andExpect(jsonPath("$.score").value(9))
                 .andExpect(jsonPath("$.comment").value("Excelente propiedad"));
     }
-
-    // DELETE /favorites/{id}
 
     @Test
     @WithMockUser(roles = "BUYER")

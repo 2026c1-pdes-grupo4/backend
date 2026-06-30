@@ -38,12 +38,12 @@ public class UserService {
     public UserResponseDTO create(UserRequestDTO dto) {
 
         if (userRepository.existsByUsername(dto.getUsername())) {
-            log.warn("Rejecting user creation: username already exists. username={}", dto.getUsername());
+            log.error("Rejecting user creation: username already exists.");
             throw new ConflictException(ErrorCode.USERNAME_ALREADY_EXISTS, "Username already exists");
         }
 
         if (userRepository.existsByEmail(dto.getEmail())) {
-            log.warn("Rejecting user creation: email already exists. email={}", dto.getEmail());
+            log.error("Rejecting user creation: email already exists.");
             throw new ConflictException(ErrorCode.EMAIL_ALREADY_EXISTS, "Email already exists");
         }
 
@@ -53,7 +53,9 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
         user.setProfileType(dto.getProfileType());
 
-        return userMapper.mapToResponse(userRepository.save(user));
+        UserResponseDTO result = userMapper.mapToResponse(userRepository.save(user));
+        log.info("User created.");
+        return result;
     }
 
     /**
@@ -62,10 +64,12 @@ public class UserService {
      * @return lista de usuarios como DTOs de respuesta
      */
     public List<UserResponseDTO> findAll() {
-        return userRepository.findAll()
+        List<UserResponseDTO> users = userRepository.findAll()
                 .stream()
                 .map(userMapper::mapToResponse)
                 .toList();
+        log.info("findAll users. count={}", users.size());
+        return users;
     }
 
     /**
@@ -78,10 +82,11 @@ public class UserService {
     public UserResponseDTO findById(Integer id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> {
-                    log.warn("User not found. userId={}", id);
+                    log.error("User not found.");
                     return new NotFoundException(ErrorCode.USER_NOT_FOUND, "User not found");
                 });
 
+        log.info("User found.");
         return userMapper.mapToResponse(user);
     }
 
@@ -98,17 +103,17 @@ public class UserService {
     public UserResponseDTO update(Integer id, UserRequestDTO dto) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> {
-                    log.warn("Cannot update user because it does not exist. userId={}", id);
+                    log.error("Cannot update user because it does not exist.");
                     return new NotFoundException(ErrorCode.USER_NOT_FOUND, "User not found");
                 });
 
         if (!user.getUsername().equals(dto.getUsername()) && userRepository.existsByUsername(dto.getUsername())) {
-            log.warn("Rejecting user update: username already exists. userId={}, username={}", id, dto.getUsername());
+            log.error("Rejecting user update: username already exists.");
             throw new ConflictException(ErrorCode.USERNAME_ALREADY_EXISTS, "Username already exists");
         }
 
         if (!user.getEmail().equals(dto.getEmail()) && userRepository.existsByEmail(dto.getEmail())) {
-            log.warn("Rejecting user update: email already exists. userId={}, email={}", id, dto.getEmail());
+            log.error("Rejecting user update: email already exists. ");
             throw new ConflictException(ErrorCode.EMAIL_ALREADY_EXISTS, "Email already exists");
         }
 
@@ -120,7 +125,9 @@ public class UserService {
             user.setPassword(passwordEncoder.encode(dto.getPassword()));
         }
 
-        return userMapper.mapToResponse(userRepository.save(user));
+        UserResponseDTO result = userMapper.mapToResponse(userRepository.save(user));
+        log.info("User updated.");
+        return result;
     }
 
     /**
@@ -132,10 +139,11 @@ public class UserService {
     public void delete(Integer id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> {
-                    log.warn("Cannot delete user because it does not exist. userId={}", id);
+                    log.error("Cannot delete user because it does not exist.");
                     return new NotFoundException(ErrorCode.USER_NOT_FOUND, "User not found");
                 });
 
         userRepository.delete(user);
+        log.info("User deleted.");
     }
 }

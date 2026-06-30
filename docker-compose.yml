@@ -14,13 +14,23 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+    networks:
+      - cth-net
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -prootpass --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   api:
     build: .
     image: cth-backend
     container_name: cth-api
+    restart: on-failure
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     environment:
       SPRING_PROFILES_ACTIVE: mysql
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/cth?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&sslMode=DISABLED
@@ -28,6 +38,14 @@ services:
       SPRING_DATASOURCE_PASSWORD: 1234
     ports:
       - "8080:8080"
+    networks:
+      - cth-net
 
 volumes:
   mysql_data:
+
+networks:
+  cth-net:
+    name: cth-net
+    driver: bridge
+

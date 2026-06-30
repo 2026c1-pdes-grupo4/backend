@@ -51,23 +51,24 @@ public class AgencyPropertyService {
      */
     public AgencyPropertyResponseDTO publish(AgencyPropertyRequestDTO dto) {
         Integer agencyId = jwtAuthUtils.getCurrentId();
+        log.info("Publishing property. agencyId={}, propertyId={}", agencyId, dto.getPropertyId());
 
         Agency agency = agencyRepository.findById(agencyId)
                 .orElseThrow(() -> {
-                    log.warn("Cannot publish property: agency not found. agencyId={}", agencyId);
+                    log.error("Cannot publish property: agency not found. agencyId={}", agencyId);
                     return new NotFoundException(ErrorCode.AGENCY_NOT_FOUND, "Agency not found");
                 });
 
         Property property = propertyRepository.findById(dto.getPropertyId())
                 .orElseThrow(() -> {
-                    log.warn("Cannot publish property: property not found. propertyId={}", dto.getPropertyId());
+                    log.error("Cannot publish property: property not found. propertyId={}", dto.getPropertyId());
                     return new NotFoundException(ErrorCode.PROPERTY_NOT_FOUND, "Property not found");
                 });
 
         validateListedPrice(dto);
 
         if (agencyPropertyRepository.existsByAgency_AgencyIdAndProperty_PropertyId(agencyId, property.getPropertyId())) {
-            log.warn("Rejecting publication: already published by agency. agencyId={}, propertyId={}", agencyId, property.getPropertyId());
+            log.error("Rejecting publication: already published by agency. agencyId={}, propertyId={}", agencyId, property.getPropertyId());
             throw new ConflictException(ErrorCode.PUBLICATION_ALREADY_EXISTS_FOR_AGENCY, "Property already published by this agency");
         }
 
@@ -78,7 +79,9 @@ public class AgencyPropertyService {
         ap.setListedDate(LocalDate.now());
         ap.getProperty().setAvailable(true);
 
-        return agencyPropertyMapper.mapToResponse(agencyPropertyRepository.save(ap));
+        AgencyPropertyResponseDTO response = agencyPropertyMapper.mapToResponse(agencyPropertyRepository.save(ap));
+        log.info("Property published successfully. agencyId={}, propertyId={}", agencyId, dto.getPropertyId());
+        return response;
     }
 
     /**
@@ -89,13 +92,15 @@ public class AgencyPropertyService {
      * @throws RuntimeException si la publicación no existe
      */
     public AgencyPropertyResponseDTO findById(Integer id) {
+        log.info("Fetching agency property publication. agencyPropertyId={}", id);
         AgencyProperty ap = agencyPropertyRepository.findById(id)
                 .orElseThrow(() -> {
-                    log.warn("Agency publication not found. agencyPropertyId={}", id);
+                    log.error("Agency publication not found. agencyPropertyId={}", id);
                     return new NotFoundException(
                             ErrorCode.AGENCY_PROPERTY_NOT_FOUND, "Agency property not found");
                 });
 
+        log.info("Agency property publication found. agencyPropertyId={}", id);
         return agencyPropertyMapper.mapToResponse(ap);
     }
 
@@ -106,11 +111,15 @@ public class AgencyPropertyService {
      */
     public List<AgencyPropertyResponseDTO> findByCurrentAgency() {
         Integer agencyId = jwtAuthUtils.getCurrentId();
+        log.info("Fetching publications for current agency. agencyId={}", agencyId);
 
-        return agencyPropertyRepository.findByAgency_AgencyId(agencyId)
+        List<AgencyPropertyResponseDTO> result = agencyPropertyRepository.findByAgency_AgencyId(agencyId)
                 .stream()
                 .map(agencyPropertyMapper::mapToResponse)
                 .toList();
+
+        log.info("Publications found for agency. agencyId={}, count={}", agencyId, result.size());
+        return result;
     }
 
     /**
@@ -125,15 +134,16 @@ public class AgencyPropertyService {
      */
     public AgencyPropertyResponseDTO updatePrice(Integer id, AgencyPropertyRequestDTO dto) {
         Integer agencyId = jwtAuthUtils.getCurrentId();
+        log.info("Updating publication price. agencyPropertyId={}, agencyId={}", id, agencyId);
 
         AgencyProperty ap = agencyPropertyRepository.findById(id)
                 .orElseThrow(() -> {
-                    log.warn("Cannot update publication price: publication not found. agencyPropertyId={}", id);
+                    log.error("Cannot update publication price: publication not found. agencyPropertyId={}", id);
                     return new NotFoundException(ErrorCode.AGENCY_PROPERTY_NOT_FOUND, "Agency property not found");
                 });
 
         if (!ap.getAgency().getAgencyId().equals(agencyId)) {
-            log.warn("Rejecting publication price update: ownership mismatch. agencyPropertyId={}, requesterAgencyId={}, ownerAgencyId={}",
+            log.error("Rejecting publication price update: ownership mismatch. agencyPropertyId={}, requesterAgencyId={}, ownerAgencyId={}",
                     id, agencyId, ap.getAgency().getAgencyId());
             throw new ForbiddenException(ErrorCode.CANNOT_MODIFY_OTHER_PUBLICATION, "Cannot modify another agency publication");
         }
@@ -142,7 +152,9 @@ public class AgencyPropertyService {
 
         ap.setListedPrice(dto.getListedPrice().doubleValue());
 
-        return agencyPropertyMapper.mapToResponse(agencyPropertyRepository.save(ap));
+        AgencyPropertyResponseDTO response = agencyPropertyMapper.mapToResponse(agencyPropertyRepository.save(ap));
+        log.info("Publication price updated successfully.");
+        return response;
     }
 
     /**
@@ -156,30 +168,32 @@ public class AgencyPropertyService {
      */
     public void delete(Integer id) {
         Integer agencyId = jwtAuthUtils.getCurrentId();
+        log.info("Deleting publication. agencyPropertyId={}, agencyId={}", id, agencyId);
 
         AgencyProperty ap = agencyPropertyRepository.findById(id)
                 .orElseThrow(() -> {
-                    log.warn("Cannot delete publication: publication not found. agencyPropertyId={}", id);
+                    log.error("Cannot delete publication: publication not found. agencyPropertyId={}", id);
                     return new NotFoundException(ErrorCode.AGENCY_PROPERTY_NOT_FOUND, "Agency property not found");
                 });
 
         if (!ap.getAgency().getAgencyId().equals(agencyId)) {
-            log.warn("Rejecting publication delete: ownership mismatch. agencyPropertyId={}, requesterAgencyId={}, ownerAgencyId={}",
+            log.error("Rejecting publication delete: ownership mismatch. agencyPropertyId={}, requesterAgencyId={}, ownerAgencyId={}",
                     id, agencyId, ap.getAgency().getAgencyId());
             throw new ForbiddenException(ErrorCode.CANNOT_DELETE_OTHER_PUBLICATION, "Cannot delete another agency publication");
         }
 
         if (!ap.getProperty().getAvailable()) {
-            log.warn("Rejecting publication delete: publication already sold. agencyPropertyId={}", id);
+            log.error("Rejecting publication delete: publication already sold. agencyPropertyId={}", id);
             throw new ValidationException(ErrorCode.SOLD_PUBLICATION_CANNOT_BE_DELETED, "Cannot delete a sold publication");
         }
 
         agencyPropertyRepository.delete(ap);
+        log.info("Publication deleted successfully. agencyPropertyId={}", id);
     }
 
     private void validateListedPrice(AgencyPropertyRequestDTO dto) {
         if (dto.getListedPrice() == null || dto.getListedPrice().doubleValue() <= 0) {
-            log.warn("Rejecting publication operation: listedPrice must be > 0. listedPrice={}", dto.getListedPrice());
+            log.error("Rejecting publication operation: listedPrice must be > 0.");
             throw new ValidationException(
                     ErrorCode.INVALID_REQUEST,
                     "listedPrice must be greater than zero",

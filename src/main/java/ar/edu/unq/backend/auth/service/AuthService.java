@@ -56,7 +56,7 @@ public class AuthService {
 
         var agency = agencyRepository.findByUsername(req.username())
                 .orElseThrow(() -> {
-                    log.warn("Login failed: username not found in users or agencies. username={}", req.username());
+                    log.error("Login failed: username not found in users or agencies. username={}", req.username());
                     return new UnauthorizedException(ErrorCode.INVALID_CREDENTIALS, "Invalid credentials");
                 });
 
@@ -81,6 +81,7 @@ public class AuthService {
                 "id", user.getUserId(),
                 "roles", List.of(role)
         ));
+        log.info("Login successful. username={}, role={}", user.getUsername(), role);
         return new LoginResponse(token);
     }
 
@@ -100,6 +101,7 @@ public class AuthService {
                 "id", agency.getAgencyId(),
                 "roles", List.of("ROLE_AGENCY")
         ));
+        log.info("Login successful. username={}, role=ROLE_AGENCY", agency.getUsername());
         return new LoginResponse(token);
     }
 
@@ -112,7 +114,7 @@ public class AuthService {
      */
     private void validatePassword(String rawPassword, String encodedPassword) {
         if (!encoder.matches(rawPassword, encodedPassword)) {
-            log.warn("Login failed: password mismatch");
+            log.error("Login failed: password mismatch");
             throw new UnauthorizedException(ErrorCode.INVALID_CREDENTIALS, "Invalid credentials");
         }
     }

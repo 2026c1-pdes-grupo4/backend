@@ -97,8 +97,6 @@ class AgencyControllerTest {
                 .andExpect(status().isForbidden());
     }
 
-    // GET /agencies/{id}
-
     @Test
     @WithMockUser(roles = "ADMIN")
     void getReturns200WithBody() throws Exception {
@@ -110,8 +108,6 @@ class AgencyControllerTest {
                 .andExpect(jsonPath("$.username").value("este"))
                 .andExpect(jsonPath("$.email").value("este@test.com"));
     }
-
-    // PUT /agencies/{id}
 
     @Test
     @WithMockUser(roles = "ADMIN")
@@ -131,8 +127,6 @@ class AgencyControllerTest {
                 .andExpect(jsonPath("$.username").value("nuevo_nombre"))
                 .andExpect(jsonPath("$.email").value("nuevo@email.com"));
     }
-
-    // DELETE /agencies/{id}
 
     @Test
     @WithMockUser(roles = "ADMIN")

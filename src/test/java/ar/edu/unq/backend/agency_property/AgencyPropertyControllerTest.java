@@ -52,8 +52,6 @@ class AgencyPropertyControllerTest {
         return dto;
     }
 
-    // POST /agency-properties
-
     @Test
     @WithMockUser(roles = "AGENCY")
     void publishReturns201WithBody() throws Exception {
@@ -84,8 +82,6 @@ class AgencyPropertyControllerTest {
                 .andExpect(status().isForbidden());
     }
 
-    // GET /agency-properties/{id}
-
     @Test
     @WithMockUser
     void getReturns200WithBody() throws Exception {
@@ -103,8 +99,6 @@ class AgencyPropertyControllerTest {
         mockMvc.perform(get("/agency-properties/5"))
                 .andExpect(status().isForbidden());
     }
-
-    // GET /agency-properties/agency/me
 
     @Test
     @WithMockUser(roles = "AGENCY")
@@ -127,8 +121,6 @@ class AgencyPropertyControllerTest {
                 .andExpect(status().isForbidden());
     }
 
-    // PUT /agency-properties/{id}
-
     @Test
     @WithMockUser(roles = "AGENCY")
     void updatePriceReturns200WithBody() throws Exception {
@@ -147,8 +139,6 @@ class AgencyPropertyControllerTest {
                 .andExpect(jsonPath("$.id").value(6))
                 .andExpect(jsonPath("$.listedPrice").value(300000.0));
     }
-
-    // DELETE /agency-properties/{id}
 
     @Test
     @WithMockUser(roles = "AGENCY")

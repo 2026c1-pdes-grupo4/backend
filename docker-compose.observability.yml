@@ -1,0 +1,59 @@
+version: "3.9"
+
+services:
+
+  loki:
+    image: grafana/loki:2.9.4
+    container_name: cth-loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./observability/loki/loki-config.yml:/etc/loki/loki-config.yml
+      - loki_data:/loki
+    command: -config.file=/etc/loki/loki-config.yml
+    networks:
+      - cth-net
+
+  prometheus:
+    image: prom/prometheus:v2.51.2
+    container_name: cth-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-lifecycle"
+    networks:
+      - cth-net
+
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: cth-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+      - loki
+    networks:
+      - cth-net
+
+volumes:
+  loki_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  cth-net:
+    external: true
+

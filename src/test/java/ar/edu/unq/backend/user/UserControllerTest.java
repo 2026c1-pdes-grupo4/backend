@@ -45,8 +45,6 @@ class UserControllerTest {
         return dto;
     }
 
-    // POST /users
-
     @Test
     @WithMockUser(roles = "ADMIN")
     void createReturns201WithBody() throws Exception {
@@ -80,8 +78,6 @@ class UserControllerTest {
                 .andExpect(status().isForbidden());
     }
 
-    // GET /users
-
     @Test
     @WithMockUser(roles = "ADMIN")
     void listReturns200WithArray() throws Exception {
@@ -104,8 +100,6 @@ class UserControllerTest {
                 .andExpect(status().isForbidden());
     }
 
-    // GET /users/{id}
-
     @Test
     @WithMockUser(roles = "ADMIN")
     void getReturns200WithBody() throws Exception {
@@ -117,8 +111,6 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.username").value("carlos"))
                 .andExpect(jsonPath("$.profileType").value("BUYER"));
     }
-
-    // PUT /users/{id}
 
     @Test
     @WithMockUser(roles = "ADMIN")
@@ -139,8 +131,6 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.username").value("nuevo_nombre"))
                 .andExpect(jsonPath("$.email").value("nuevo@test.com"));
     }
-
-    // DELETE /users/{id}
 
     @Test
     @WithMockUser(roles = "ADMIN")
