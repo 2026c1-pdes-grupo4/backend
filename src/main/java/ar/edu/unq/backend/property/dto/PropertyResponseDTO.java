@@ -25,6 +25,7 @@ public class PropertyResponseDTO {
     private String block;
     private String parcel;
 
+    private Integer agencyPropertyId;
     private BigDecimal listedPrice;
     private Integer agencyId;
     private String agencyName;

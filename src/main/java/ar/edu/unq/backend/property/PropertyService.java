@@ -162,6 +162,7 @@ public class PropertyService {
 
     private PropertyResponseDTO toSearchResponse(AgencyProperty listing) {
         PropertyResponseDTO dto = propertyMapper.toResponse(listing.getProperty());
+        dto.setAgencyPropertyId(listing.getAgencyPropertyId());
         dto.setListedPrice(BigDecimal.valueOf(listing.getListedPrice()));
         dto.setAgencyId(listing.getAgency().getAgencyId());
         dto.setAgencyName(listing.getAgency().getUsername());
