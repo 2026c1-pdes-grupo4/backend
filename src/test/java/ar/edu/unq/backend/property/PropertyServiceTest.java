@@ -5,6 +5,8 @@ import ar.edu.unq.backend.agency_property.AgencyProperty;
 import ar.edu.unq.backend.agency_property.AgencyPropertyRepository;
 import ar.edu.unq.backend.common.exception.NotFoundException;
 import ar.edu.unq.backend.common.exception.ValidationException;
+import ar.edu.unq.backend.picture.Picture;
+import ar.edu.unq.backend.picture.PictureRepository;
 import ar.edu.unq.backend.property.dto.PropertyRequestDTO;
 import ar.edu.unq.backend.property.dto.PropertyResponseDTO;
 import org.junit.jupiter.api.Test;
@@ -28,6 +30,8 @@ class PropertyServiceTest {
     private AgencyPropertyRepository agencyPropertyRepository;
     @Mock
     private PropertyMapper propertyMapper;
+    @Mock
+    private PictureRepository pictureRepository;
 
     @InjectMocks
     private PropertyService propertyService;
@@ -57,6 +61,7 @@ class PropertyServiceTest {
         agency.setUsername("inmo");
 
         AgencyProperty ap = new AgencyProperty();
+        ap.setAgencyPropertyId(99);
         ap.setProperty(property);
         ap.setAgency(agency);
         ap.setListedPrice(200000.0);
@@ -64,9 +69,13 @@ class PropertyServiceTest {
         PropertyResponseDTO base = new PropertyResponseDTO();
         base.setId(10);
 
+        Picture picture = new Picture();
+        picture.setUrl("https://images.unsplash.com/photo-1");
+
         when(agencyPropertyRepository.searchActiveListings(any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(List.of(ap));
         when(propertyMapper.toResponse(property)).thenReturn(base);
+        when(pictureRepository.findByAgencyProperty_AgencyPropertyId(99)).thenReturn(List.of(picture));
 
         List<PropertyResponseDTO> result = propertyService.search(
                 "Buenos Aires",
@@ -82,6 +91,7 @@ class PropertyServiceTest {
         assertEquals(7, result.get(0).getAgencyId());
         assertEquals("inmo", result.get(0).getAgencyName());
         assertEquals(BigDecimal.valueOf(200000.0), result.get(0).getListedPrice());
+        assertEquals("https://images.unsplash.com/photo-1", result.get(0).getImageUrl());
     }
 
     @Test

@@ -29,4 +29,5 @@ public class PropertyResponseDTO {
     private BigDecimal listedPrice;
     private Integer agencyId;
     private String agencyName;
+    private String imageUrl;
 }
