@@ -11,5 +11,8 @@ public interface PurchaseMapper {
     @Mapping(target = "agencyName",      source = "agencyProperty.agency.username")
     @Mapping(target = "purchasePrice",   source = "purchasePrice")
     @Mapping(target = "purchaseDate",    source = "purchaseDate")
+    @Mapping(target = "buyerId",         source = "user.userId")
+    @Mapping(target = "buyerUsername",   source = "user.username")
+    @Mapping(target = "buyerEmail",      source = "user.email")
     PurchaseResponseDTO mapToResponse(Purchase purchase);
 }

@@ -14,4 +14,7 @@ public class PurchaseResponseDTO {
     private String agencyName;
     private BigDecimal purchasePrice;
     private LocalDate purchaseDate;
+    private Integer buyerId;
+    private String buyerUsername;
+    private String buyerEmail;
 }
