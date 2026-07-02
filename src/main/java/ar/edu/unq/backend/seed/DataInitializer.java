@@ -58,6 +58,9 @@ public class DataInitializer {
             admin.setProfileType(ProfileType.ADMIN);
             admin = userRepository.save(admin);
 
+            User buyer12 = buildBuyer("buyer12", "buyer12@mail.com", encoder);
+            buyer12 = userRepository.save(buyer12);
+
             User manuel = buildBuyer("manuel", "manuel@argentina.gob", encoder);
             manuel = userRepository.save(manuel);
 
@@ -101,6 +104,9 @@ public class DataInitializer {
             camila = userRepository.save(camila);
 
             // --- AGENCIES (all owned by karina) ---
+
+            Agency inmo3 = buildAgency("inmo3", "inmo3@propiedades.com", karina, encoder);
+            inmo3 = agencyRepository.save(inmo3);
 
             Agency ritondo = buildAgency("ritondo_propiedades", "ritondo@propiedades.com", karina, encoder);
             ritondo = agencyRepository.save(ritondo);
@@ -326,9 +332,11 @@ public class DataInitializer {
             purchaseRepository.save(purchase1);
 
             System.out.println("Seed data loaded");
+            System.out.println("BUYER  - buyer12  / buyer123");
             System.out.println("ADMIN  - karina   / admin123");
             System.out.println("ADMIN  - admin123 / admin123");
             System.out.println("BUYER  - manuel   / buyer123");
+            System.out.println("AGENCY - inmo3                  / agency123");
             System.out.println("AGENCY - ritondo_propiedades    / agency123");
             System.out.println("AGENCY - nordelta_propiedades   / agency123");
             System.out.println("AGENCY - puerto_madero_brokers  / agency123");
