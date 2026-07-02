@@ -5,6 +5,8 @@ import ar.edu.unq.backend.agency_property.AgencyPropertyRepository;
 import ar.edu.unq.backend.common.error.ErrorCode;
 import ar.edu.unq.backend.common.exception.NotFoundException;
 import ar.edu.unq.backend.common.exception.ValidationException;
+import ar.edu.unq.backend.picture.Picture;
+import ar.edu.unq.backend.picture.PictureRepository;
 import ar.edu.unq.backend.property.dto.PropertyRequestDTO;
 import ar.edu.unq.backend.property.dto.PropertyResponseDTO;
 import org.slf4j.Logger;
@@ -27,13 +29,16 @@ public class PropertyService {
     private final PropertyRepository propertyRepository;
     private final AgencyPropertyRepository agencyPropertyRepository;
     private final PropertyMapper propertyMapper;
+    private final PictureRepository pictureRepository;
 
     public PropertyService(PropertyRepository propertyRepository,
                            AgencyPropertyRepository agencyPropertyRepository,
-                           PropertyMapper propertyMapper) {
+                           PropertyMapper propertyMapper,
+                           PictureRepository pictureRepository) {
         this.propertyRepository = propertyRepository;
         this.agencyPropertyRepository = agencyPropertyRepository;
         this.propertyMapper = propertyMapper;
+        this.pictureRepository = pictureRepository;
     }
 
     /**
@@ -178,6 +183,15 @@ public class PropertyService {
         dto.setListedPrice(BigDecimal.valueOf(listing.getListedPrice()));
         dto.setAgencyId(listing.getAgency().getAgencyId());
         dto.setAgencyName(listing.getAgency().getUsername());
+        dto.setImageUrl(firstPictureUrl(listing.getAgencyPropertyId()));
         return dto;
+    }
+
+    private String firstPictureUrl(Integer agencyPropertyId) {
+        return pictureRepository.findByAgencyProperty_AgencyPropertyId(agencyPropertyId)
+                .stream()
+                .findFirst()
+                .map(Picture::getUrl)
+                .orElse(null);
     }
 }
