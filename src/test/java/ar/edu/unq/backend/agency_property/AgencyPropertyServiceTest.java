@@ -61,6 +61,7 @@ class AgencyPropertyServiceTest {
         agencyProperty.setAgency(agency);
         agencyProperty.setProperty(property);
         agencyProperty.setListedPrice(100000.0);
+        agencyProperty.setDeleted(false);
 
         dto = new AgencyPropertyRequestDTO();
         dto.setPropertyId(2);
@@ -115,11 +116,21 @@ class AgencyPropertyServiceTest {
     }
 
     @Test
+    void publish_throwsValidationException_whenPropertyIsAlreadySold() {
+        property.setAvailable(false);
+        when(jwtAuthUtils.getCurrentId()).thenReturn(1);
+        when(agencyRepository.findById(1)).thenReturn(Optional.of(agency));
+        when(propertyRepository.findById(2)).thenReturn(Optional.of(property));
+
+        assertThrows(ValidationException.class, () -> agencyPropertyService.publish(dto));
+    }
+
+    @Test
     void publish_throwsConflictException_whenPropertyAlreadyPublishedByAgency() {
         when(jwtAuthUtils.getCurrentId()).thenReturn(1);
         when(agencyRepository.findById(1)).thenReturn(Optional.of(agency));
         when(propertyRepository.findById(2)).thenReturn(Optional.of(property));
-        when(agencyPropertyRepository.existsByAgency_AgencyIdAndProperty_PropertyId(1, 2)).thenReturn(true);
+        when(agencyPropertyRepository.existsByAgency_AgencyIdAndProperty_PropertyIdAndDeletedFalse(1, 2)).thenReturn(true);
 
         assertThrows(ConflictException.class, () -> agencyPropertyService.publish(dto));
     }
@@ -130,7 +141,7 @@ class AgencyPropertyServiceTest {
         when(jwtAuthUtils.getCurrentId()).thenReturn(1);
         when(agencyRepository.findById(1)).thenReturn(Optional.of(agency));
         when(propertyRepository.findById(2)).thenReturn(Optional.of(property));
-        when(agencyPropertyRepository.existsByAgency_AgencyIdAndProperty_PropertyId(1, 2)).thenReturn(false);
+        when(agencyPropertyRepository.existsByAgency_AgencyIdAndProperty_PropertyIdAndDeletedFalse(1, 2)).thenReturn(false);
         when(agencyPropertyRepository.save(any(AgencyProperty.class))).thenReturn(agencyProperty);
         when(agencyPropertyMapper.mapToResponse(agencyProperty)).thenReturn(expectedResponse);
 
@@ -139,7 +150,6 @@ class AgencyPropertyServiceTest {
         assertNotNull(result);
         assertEquals(expectedResponse, result);
         verify(agencyPropertyRepository).save(any(AgencyProperty.class));
-        assertTrue(property.getAvailable());
     }
 
     @Test
@@ -164,7 +174,7 @@ class AgencyPropertyServiceTest {
     @Test
     void findByCurrentAgency_returnsEmptyList_whenNoPublications() {
         when(jwtAuthUtils.getCurrentId()).thenReturn(1);
-        when(agencyPropertyRepository.findByAgency_AgencyId(1)).thenReturn(List.of());
+        when(agencyPropertyRepository.findByAgency_AgencyIdAndDeletedFalse(1)).thenReturn(List.of());
 
         List<AgencyPropertyResponseDTO> result = agencyPropertyService.findByCurrentAgency();
 
@@ -176,7 +186,7 @@ class AgencyPropertyServiceTest {
     void findByCurrentAgency_returnsMappedList_whenPublicationsExist() {
         AgencyPropertyResponseDTO responseDTO = new AgencyPropertyResponseDTO();
         when(jwtAuthUtils.getCurrentId()).thenReturn(1);
-        when(agencyPropertyRepository.findByAgency_AgencyId(1)).thenReturn(List.of(agencyProperty));
+        when(agencyPropertyRepository.findByAgency_AgencyIdAndDeletedFalse(1)).thenReturn(List.of(agencyProperty));
         when(agencyPropertyMapper.mapToResponse(agencyProperty)).thenReturn(responseDTO);
 
         List<AgencyPropertyResponseDTO> result = agencyPropertyService.findByCurrentAgency();
@@ -277,6 +287,24 @@ class AgencyPropertyServiceTest {
 
         agencyPropertyService.delete(10);
 
-        verify(agencyPropertyRepository).delete(agencyProperty);
+        assertTrue(agencyProperty.getDeleted());
+        verify(agencyPropertyRepository).save(agencyProperty);
+    }
+
+    @Test
+    void findById_throwsNotFoundException_whenPublicationIsSoftDeleted() {
+        agencyProperty.setDeleted(true);
+        when(agencyPropertyRepository.findById(10)).thenReturn(Optional.of(agencyProperty));
+
+        assertThrows(NotFoundException.class, () -> agencyPropertyService.findById(10));
+    }
+
+    @Test
+    void updatePrice_throwsNotFoundException_whenPublicationIsSoftDeleted() {
+        agencyProperty.setDeleted(true);
+        when(jwtAuthUtils.getCurrentId()).thenReturn(1);
+        when(agencyPropertyRepository.findById(10)).thenReturn(Optional.of(agencyProperty));
+
+        assertThrows(NotFoundException.class, () -> agencyPropertyService.updatePrice(10, dto));
     }
 }

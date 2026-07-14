@@ -9,13 +9,16 @@ import java.util.List;
 
 public interface AgencyPropertyRepository extends JpaRepository<AgencyProperty, Integer> {
 
-    List<AgencyProperty> findByAgency_AgencyId(Integer agencyId);
+    List<AgencyProperty> findByAgency_AgencyIdAndDeletedFalse(Integer agencyId);
 
-    boolean existsByAgency_AgencyIdAndProperty_PropertyId(Integer agencyId, Integer propertyId);
+    boolean existsByAgency_AgencyIdAndProperty_PropertyIdAndDeletedFalse(Integer agencyId, Integer propertyId);
+
+    boolean existsByProperty_PropertyIdAndDeletedFalse(Integer propertyId);
 
     @Query("""
             select ap from AgencyProperty ap
-            where ap.property.available = true
+            where ap.deleted = false
+              and ap.property.available = true
               and (:city is null or lower(ap.property.city) = lower(:city))
               and (:province is null or lower(ap.property.province) = lower(:province))
               and (:propertyType is null or ap.property.propertyType = :propertyType)

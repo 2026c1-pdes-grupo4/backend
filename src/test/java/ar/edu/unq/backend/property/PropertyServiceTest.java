@@ -132,7 +132,9 @@ class PropertyServiceTest {
     @Test
     void deleteCallsRepositoryWhenFound() {
         Property entity = new Property();
+        entity.setAvailable(true);
         when(propertyRepository.findById(1)).thenReturn(java.util.Optional.of(entity));
+        when(agencyPropertyRepository.existsByProperty_PropertyIdAndDeletedFalse(1)).thenReturn(false);
 
         propertyService.delete(1);
 
@@ -177,6 +179,27 @@ class PropertyServiceTest {
         when(propertyRepository.findById(77)).thenReturn(java.util.Optional.empty());
 
         assertThrows(NotFoundException.class, () -> propertyService.delete(77));
+    }
+
+    @Test
+    void deleteThrowsWhenPropertyIsSold() {
+        Property entity = new Property();
+        entity.setAvailable(false);
+        when(propertyRepository.findById(2)).thenReturn(java.util.Optional.of(entity));
+
+        assertThrows(ValidationException.class, () -> propertyService.delete(2));
+        verify(propertyRepository, never()).delete(any(Property.class));
+    }
+
+    @Test
+    void deleteThrowsWhenPropertyHasActivePublications() {
+        Property entity = new Property();
+        entity.setAvailable(true);
+        when(propertyRepository.findById(3)).thenReturn(java.util.Optional.of(entity));
+        when(agencyPropertyRepository.existsByProperty_PropertyIdAndDeletedFalse(3)).thenReturn(true);
+
+        assertThrows(ValidationException.class, () -> propertyService.delete(3));
+        verify(propertyRepository, never()).delete(any(Property.class));
     }
 }
 

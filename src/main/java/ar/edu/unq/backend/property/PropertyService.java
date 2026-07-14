@@ -115,8 +115,10 @@ public class PropertyService {
 
     /**
      * Elimina una propiedad por el id.
+     * No se puede eliminar una propiedad que ya fue vendida ni una que tenga publicaciones activas.
      *
      * @param id identificador de la propiedad a eliminar
+     * @throws ValidationException si la propiedad fue vendida o tiene publicaciones asociadas
      */
     @Transactional
     public void delete(Integer id) {
@@ -125,6 +127,16 @@ public class PropertyService {
                     log.error("Cannot delete property because it does not exist.");
                     return new NotFoundException(ErrorCode.PROPERTY_NOT_FOUND, "Property not found");
                 });
+
+        if (!property.getAvailable()) {
+            log.error("Cannot delete property: it has already been sold. propertyId={}", id);
+            throw new ValidationException(ErrorCode.SOLD_PROPERTY_CANNOT_BE_DELETED, "Cannot delete a sold property");
+        }
+
+        if (agencyPropertyRepository.existsByProperty_PropertyIdAndDeletedFalse(id)) {
+            log.error("Cannot delete property: it has active publications. propertyId={}", id);
+            throw new ValidationException(ErrorCode.PROPERTY_HAS_ACTIVE_PUBLICATIONS, "Cannot delete a property with active publications");
+        }
 
         propertyRepository.delete(property);
         log.info("Property deleted. propertyId={}", id);
