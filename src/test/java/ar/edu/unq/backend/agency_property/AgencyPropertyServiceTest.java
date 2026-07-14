@@ -7,6 +7,7 @@ import ar.edu.unq.backend.common.exception.ConflictException;
 import ar.edu.unq.backend.common.exception.ForbiddenException;
 import ar.edu.unq.backend.common.exception.NotFoundException;
 import ar.edu.unq.backend.common.exception.ValidationException;
+import ar.edu.unq.backend.picture.PictureService;
 import ar.edu.unq.backend.property.Property;
 import ar.edu.unq.backend.property.PropertyRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,6 +39,8 @@ class AgencyPropertyServiceTest {
     private AgencyPropertyMapper agencyPropertyMapper;
     @Mock
     private JwtAuthUtils jwtAuthUtils;
+    @Mock
+    private PictureService pictureService;
 
     @InjectMocks
     private AgencyPropertyService agencyPropertyService;
