@@ -134,6 +134,24 @@ public class PropertyService {
         log.info("Property deleted. propertyId={}", id);
     }
 
+    /**
+     * Busca una propiedad existente por sus datos catastrales.
+     * Se usa para detectar duplicados antes de crear una propiedad nueva.
+     *
+     * @return la propiedad encontrada como DTO de respuesta
+     * @throws RuntimeException si no existe una propiedad con esos datos catastrales
+     */
+    public PropertyResponseDTO findByCadastral(String circumscription, String section, String block, String parcel) {
+        log.info("Looking up property by cadastral data.");
+        Property property = propertyRepository.findByCircumscriptionAndSectionAndBlockAndParcel(circumscription, section, block, parcel)
+                .orElseThrow(() -> {
+                    log.error("No property found for given cadastral data.");
+                    return new NotFoundException(ErrorCode.PROPERTY_NOT_FOUND, "Property not found");
+                });
+        log.info("Property found by cadastral data.");
+        return propertyMapper.toResponse(property);
+    }
+
     public List<AgencyPropertyResponseDTO> search(String city, String province, String propertyType, Integer rooms,
             BigDecimal priceMin, BigDecimal priceMax, String keyword) {
         if (priceMin != null && priceMax != null && priceMin.compareTo(priceMax) > 0) {
