@@ -4,6 +4,7 @@ import ar.edu.unq.backend.agency_property.AgencyProperty;
 import ar.edu.unq.backend.agency_property.AgencyPropertyMapper;
 import ar.edu.unq.backend.agency_property.AgencyPropertyRepository;
 import ar.edu.unq.backend.agency_property.AgencyPropertyResponseDTO;
+import ar.edu.unq.backend.agency_property.AgencyPropertySpecification;
 import ar.edu.unq.backend.common.dto.PagedResultDTO;
 import ar.edu.unq.backend.common.error.ErrorCode;
 import ar.edu.unq.backend.common.exception.NotFoundException;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Locale;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 
 /**
  * Servicio que gestiona el ciclo de vida de las propiedades inmobiliarias.
@@ -202,14 +204,17 @@ public class PropertyService {
         }
 
         PropertyType parsedType = parsePropertyType(propertyType);
-        Page<AgencyProperty> resultPage = agencyPropertyRepository.searchActiveListings(
-                city, province, parsedType,
-                roomsMin, roomsMax,
-                priceMin  == null ? null : priceMin.doubleValue(),
-                priceMax  == null ? null : priceMax.doubleValue(),
-                keyword,
-                PageRequest.of(page, size)
-        );
+
+        Specification<AgencyProperty> spec =
+                AgencyPropertySpecification.searchActiveListings(
+                        city, province, parsedType,
+                        roomsMin, roomsMax,
+                        priceMin == null ? null : priceMin.doubleValue(),
+                        priceMax == null ? null : priceMax.doubleValue(),
+                        keyword
+                );
+
+        Page<AgencyProperty> resultPage = agencyPropertyRepository.findAll(spec, PageRequest.of(page, size));
 
         List<AgencyPropertyResponseDTO> content = resultPage.getContent()
                 .stream()
