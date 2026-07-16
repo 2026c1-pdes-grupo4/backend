@@ -68,7 +68,7 @@ public class AdminService {
     }
 
     public List<AgencyResponseDTO> findAllAgencies() {
-        return agencyRepository.findAll()
+        return agencyRepository.findAllByDeletedFalse()
                 .stream()
                 .map(agencyMapper::mapToResponse)
                 .toList();

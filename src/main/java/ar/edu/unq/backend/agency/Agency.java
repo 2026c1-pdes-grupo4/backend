@@ -29,4 +29,7 @@ public class Agency {
     @JoinColumn(name = "admin_user_id", nullable = false)
     private User adminUser;
 
+    @Column(nullable = false)
+    private Boolean deleted = false;
+
 }

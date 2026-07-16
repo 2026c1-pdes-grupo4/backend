@@ -1,5 +1,7 @@
 package ar.edu.unq.backend.agency;
 
+import ar.edu.unq.backend.agency_property.AgencyProperty;
+import ar.edu.unq.backend.agency_property.AgencyPropertyRepository;
 import ar.edu.unq.backend.auth.JwtAuthUtils;
 import ar.edu.unq.backend.common.error.ErrorCode;
 import ar.edu.unq.backend.common.exception.ConflictException;
@@ -23,17 +25,20 @@ public class AgencyService {
 
     private final AgencyRepository agencyRepository;
     private final UserRepository userRepository;
+    private final AgencyPropertyRepository agencyPropertyRepository;
     private final JwtAuthUtils jwtAuthUtils;
     private final PasswordEncoder passwordEncoder;
     private final AgencyMapper agencyMapper;
 
     public AgencyService(AgencyRepository agencyRepository,
                          UserRepository userRepository,
+                         AgencyPropertyRepository agencyPropertyRepository,
                          JwtAuthUtils jwtAuthUtils,
                          PasswordEncoder passwordEncoder,
                          AgencyMapper agencyMapper) {
         this.agencyRepository = agencyRepository;
         this.userRepository = userRepository;
+        this.agencyPropertyRepository = agencyPropertyRepository;
         this.jwtAuthUtils = jwtAuthUtils;
         this.passwordEncoder = passwordEncoder;
         this.agencyMapper = agencyMapper;
@@ -83,7 +88,7 @@ public class AgencyService {
      */
     public List<AgencyResponseDTO> findAll() {
         log.info("Fetching all agencies.");
-        List<AgencyResponseDTO> result = agencyRepository.findAll()
+        List<AgencyResponseDTO> result = agencyRepository.findAllByDeletedFalse()
                 .stream()
                 .map(agencyMapper::mapToResponse)
                 .toList();
@@ -105,6 +110,12 @@ public class AgencyService {
                     log.error("Agency not found. agencyId={}", id);
                     return new NotFoundException(ErrorCode.AGENCY_NOT_FOUND, "Agency not found");
                 });
+
+        if (agency.getDeleted()) {
+            log.error("Agency not found (soft-deleted). agencyId={}", id);
+            throw new NotFoundException(ErrorCode.AGENCY_NOT_FOUND, "Agency not found");
+        }
+
         log.info("Agency found.");
         return agencyMapper.mapToResponse(agency);
     }
@@ -150,7 +161,10 @@ public class AgencyService {
     }
 
     /**
-     * Elimina una agencia por el id.
+     * Realiza el borrado lógico de una agencia por el id, junto con todas sus
+     * publicaciones activas. Las compras históricas no se ven afectadas, ya que
+     * referencian directamente la publicación y no dependen de que la agencia
+     * siga activa.
      *
      * @param id identificador de la agencia a eliminar
      * @throws RuntimeException si la agencia no existe
@@ -162,7 +176,12 @@ public class AgencyService {
                     return new NotFoundException(ErrorCode.AGENCY_NOT_FOUND, "Agency not found");
                 });
 
-        agencyRepository.delete(agency);
-        log.info("Agency deleted.");
+        List<AgencyProperty> listings = agencyPropertyRepository.findByAgency_AgencyIdAndDeletedFalse(id);
+        listings.forEach(ap -> ap.setDeleted(true));
+        agencyPropertyRepository.saveAll(listings);
+
+        agency.setDeleted(true);
+        agencyRepository.save(agency);
+        log.info("Agency soft-deleted along with {} active listing(s). agencyId={}", listings.size(), id);
     }
 }

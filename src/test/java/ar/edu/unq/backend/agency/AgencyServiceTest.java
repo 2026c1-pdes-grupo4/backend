@@ -1,5 +1,7 @@
 package ar.edu.unq.backend.agency;
 
+import ar.edu.unq.backend.agency_property.AgencyProperty;
+import ar.edu.unq.backend.agency_property.AgencyPropertyRepository;
 import ar.edu.unq.backend.auth.JwtAuthUtils;
 import ar.edu.unq.backend.common.exception.ConflictException;
 import ar.edu.unq.backend.common.exception.NotFoundException;
@@ -13,10 +15,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -29,6 +33,8 @@ class AgencyServiceTest {
     private AgencyRepository agencyRepository;
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private AgencyPropertyRepository agencyPropertyRepository;
     @Mock
     private JwtAuthUtils jwtAuthUtils;
     @Mock
@@ -121,14 +127,35 @@ class AgencyServiceTest {
     }
 
     @Test
-    void deleteDelegatesToRepository() {
+    void deleteSoftDeletesAgency() {
         Agency agency = new Agency();
         agency.setAgencyId(1);
         when(agencyRepository.findById(1)).thenReturn(Optional.of(agency));
+        when(agencyPropertyRepository.findByAgency_AgencyIdAndDeletedFalse(1)).thenReturn(List.of());
 
         agencyService.delete(1);
 
-        verify(agencyRepository).delete(agency);
+        assertTrue(agency.getDeleted());
+        verify(agencyRepository).save(agency);
+        verify(agencyRepository, never()).delete(any(Agency.class));
+    }
+
+    @Test
+    void deleteCascadesToActiveListings() {
+        Agency agency = new Agency();
+        agency.setAgencyId(1);
+
+        AgencyProperty listing1 = new AgencyProperty();
+        AgencyProperty listing2 = new AgencyProperty();
+
+        when(agencyRepository.findById(1)).thenReturn(Optional.of(agency));
+        when(agencyPropertyRepository.findByAgency_AgencyIdAndDeletedFalse(1)).thenReturn(List.of(listing1, listing2));
+
+        agencyService.delete(1);
+
+        assertTrue(listing1.getDeleted());
+        assertTrue(listing2.getDeleted());
+        verify(agencyPropertyRepository).saveAll(List.of(listing1, listing2));
     }
 }
 

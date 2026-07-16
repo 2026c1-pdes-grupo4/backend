@@ -125,7 +125,7 @@ class AdminServiceTest {
     void findAllAgenciesMapsEntities() {
         ar.edu.unq.backend.agency.Agency entity = new ar.edu.unq.backend.agency.Agency();
         AgencyResponseDTO dto = new AgencyResponseDTO();
-        when(agencyRepository.findAll()).thenReturn(List.of(entity));
+        when(agencyRepository.findAllByDeletedFalse()).thenReturn(List.of(entity));
         when(agencyMapper.mapToResponse(entity)).thenReturn(dto);
 
         assertEquals(1, adminService.findAllAgencies().size());
