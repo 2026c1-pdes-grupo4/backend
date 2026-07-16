@@ -180,5 +180,23 @@ class PropertyServiceTest {
 
         assertThrows(NotFoundException.class, () -> propertyService.delete(77));
     }
+
+    @Test
+    void findByCadastralReturnsMappedDtoWhenFound() {
+        Property entity = new Property();
+        when(propertyRepository.findByCircumscriptionAndSectionAndBlockAndParcel("1", "A", "10", "5"))
+                .thenReturn(java.util.Optional.of(entity));
+        when(propertyMapper.toResponse(entity)).thenReturn(new PropertyResponseDTO());
+
+        assertNotNull(propertyService.findByCadastral("1", "A", "10", "5"));
+    }
+
+    @Test
+    void findByCadastralThrowsWhenNoMatch() {
+        when(propertyRepository.findByCircumscriptionAndSectionAndBlockAndParcel("1", "A", "10", "5"))
+                .thenReturn(java.util.Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> propertyService.findByCadastral("1", "A", "10", "5"));
+    }
 }
 

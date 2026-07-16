@@ -32,6 +32,13 @@ public class PropertyController {
         return service.findById(id);
     }
 
+    @GetMapping("/find-by-cadastral")
+    @PreAuthorize("hasRole('AGENCY')")
+    public PropertyResponseDTO findByCadastral(@RequestParam String circumscription, @RequestParam String section,
+                                                @RequestParam String block, @RequestParam String parcel) {
+        return service.findByCadastral(circumscription, section, block, parcel);
+    }
+
     @PostMapping
     @PreAuthorize("hasRole('AGENCY')")
     @ResponseStatus(HttpStatus.CREATED)

@@ -2,6 +2,8 @@ package ar.edu.unq.backend.property;
 
 import ar.edu.unq.backend.agency_property.AgencyPropertyResponseDTO;
 import ar.edu.unq.backend.auth.JwtService;
+import ar.edu.unq.backend.common.error.ErrorCode;
+import ar.edu.unq.backend.common.exception.NotFoundException;
 import ar.edu.unq.backend.config.SecurityConfig;
 import ar.edu.unq.backend.property.dto.PropertyRequestDTO;
 import ar.edu.unq.backend.property.dto.PropertyResponseDTO;
@@ -163,6 +165,50 @@ class PropertyControllerTest {
                 .andExpect(jsonPath("$[0].id").value(2))
                 .andExpect(jsonPath("$[0].city").value("Rosario"))
                 .andExpect(jsonPath("$[0].listedPrice").value(150000));
+    }
+
+    @Test
+    @WithMockUser(roles = "AGENCY")
+    void findByCadastralReturns200WithBodyWhenFound() throws Exception {
+        PropertyResponseDTO resp = new PropertyResponseDTO();
+        resp.setId(4);
+        resp.setAddress("San Martin 400");
+
+        when(propertyService.findByCadastral("1", "A", "10", "5")).thenReturn(resp);
+
+        mockMvc.perform(get("/properties/find-by-cadastral")
+                        .param("circumscription", "1")
+                        .param("section", "A")
+                        .param("block", "10")
+                        .param("parcel", "5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(4))
+                .andExpect(jsonPath("$.address").value("San Martin 400"));
+    }
+
+    @Test
+    @WithMockUser(roles = "AGENCY")
+    void findByCadastralReturns404WhenNoMatch() throws Exception {
+        when(propertyService.findByCadastral("1", "A", "10", "5"))
+                .thenThrow(new NotFoundException(ErrorCode.PROPERTY_NOT_FOUND, "Property not found"));
+
+        mockMvc.perform(get("/properties/find-by-cadastral")
+                        .param("circumscription", "1")
+                        .param("section", "A")
+                        .param("block", "10")
+                        .param("parcel", "5"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(roles = "BUYER")
+    void findByCadastralReturns403WhenNotAgency() throws Exception {
+        mockMvc.perform(get("/properties/find-by-cadastral")
+                        .param("circumscription", "1")
+                        .param("section", "A")
+                        .param("block", "10")
+                        .param("parcel", "5"))
+                .andExpect(status().isForbidden());
     }
 
     @Test
