@@ -2,6 +2,7 @@ package ar.edu.unq.backend.property;
 
 import ar.edu.unq.backend.agency_property.AgencyPropertyResponseDTO;
 import ar.edu.unq.backend.auth.JwtService;
+import ar.edu.unq.backend.common.dto.PagedResultDTO;
 import ar.edu.unq.backend.config.SecurityConfig;
 import ar.edu.unq.backend.property.dto.PropertyRequestDTO;
 import ar.edu.unq.backend.property.dto.PropertyResponseDTO;
@@ -155,26 +156,36 @@ class PropertyControllerTest {
         dto.setCity("Rosario");
         dto.setListedPrice(150000.0);
 
-        when(propertyService.search(eq("Rosario"), isNull(), isNull(), isNull(), isNull(), isNull(), isNull()))
-                .thenReturn(List.of(dto));
+        PagedResultDTO<AgencyPropertyResponseDTO> page =
+                new PagedResultDTO<>(List.of(dto), 0, 10, 1, 1);
+
+        when(propertyService.search(eq("Rosario"), isNull(), isNull(), isNull(), isNull(),
+                isNull(), isNull(), isNull(), eq(0), eq(10)))
+                .thenReturn(page);
 
         mockMvc.perform(get("/properties/search").param("city", "Rosario"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(2))
-                .andExpect(jsonPath("$[0].city").value("Rosario"))
-                .andExpect(jsonPath("$[0].listedPrice").value(150000));
+                .andExpect(jsonPath("$.content[0].id").value(2))
+                .andExpect(jsonPath("$.content[0].city").value("Rosario"))
+                .andExpect(jsonPath("$.content[0].listedPrice").value(150000))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.totalPages").value(1));
     }
 
     @Test
     @WithMockUser
-    void searchReturnsEmptyListWhenNoMatch() throws Exception {
-        when(propertyService.search(any(), any(), any(), any(), any(), any(), any()))
-                .thenReturn(List.of());
+    void searchReturnsEmptyContentWhenNoMatch() throws Exception {
+        PagedResultDTO<AgencyPropertyResponseDTO> emptyPage =
+                new PagedResultDTO<>(List.of(), 0, 10, 0, 0);
+
+        when(propertyService.search(any(), any(), any(), any(), any(), any(), any(), any(), anyInt(), anyInt()))
+                .thenReturn(emptyPage);
 
         mockMvc.perform(get("/properties/search").param("city", "NoExiste"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$").isEmpty());
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content").isEmpty())
+                .andExpect(jsonPath("$.totalElements").value(0));
     }
 }
 

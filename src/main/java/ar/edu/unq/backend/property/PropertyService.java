@@ -4,6 +4,7 @@ import ar.edu.unq.backend.agency_property.AgencyProperty;
 import ar.edu.unq.backend.agency_property.AgencyPropertyMapper;
 import ar.edu.unq.backend.agency_property.AgencyPropertyRepository;
 import ar.edu.unq.backend.agency_property.AgencyPropertyResponseDTO;
+import ar.edu.unq.backend.common.dto.PagedResultDTO;
 import ar.edu.unq.backend.common.error.ErrorCode;
 import ar.edu.unq.backend.common.exception.NotFoundException;
 import ar.edu.unq.backend.common.exception.ValidationException;
@@ -18,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Locale;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 
 /**
  * Servicio que gestiona el ciclo de vida de las propiedades inmobiliarias.
@@ -147,66 +150,74 @@ public class PropertyService {
         log.info("Property deleted. propertyId={}", id);
     }
 
-    public List<AgencyPropertyResponseDTO> search(String city, String province, String propertyType, Integer rooms,
-            BigDecimal priceMin, BigDecimal priceMax, String keyword) {
+    public PagedResultDTO<AgencyPropertyResponseDTO> search(
+            String city, String province, String propertyType,
+            Integer roomsMin, Integer roomsMax,
+            BigDecimal priceMin, BigDecimal priceMax,
+            String keyword, int page, int size) {
 
-        city = normalizeString(city);
+        city     = normalizeString(city);
         province = normalizeString(province);
-        keyword = normalizeString(keyword);
+        keyword  = normalizeString(keyword);
 
         if (priceMin != null && priceMin.signum() < 0) {
             log.error("Rejecting property search: priceMin is negative.");
-            throw new ValidationException(
-                    ErrorCode.INVALID_PRICE_RANGE,
-                    "priceMin must be >= 0",
-                    List.of("priceMin must be >= 0")
-            );
+            throw new ValidationException(ErrorCode.INVALID_PRICE_RANGE,
+                    "priceMin must be >= 0", List.of("priceMin must be >= 0"));
         }
-
         if (priceMax != null && priceMax.signum() < 0) {
             log.error("Rejecting property search: priceMax is negative.");
-            throw new ValidationException(
-                    ErrorCode.INVALID_PRICE_RANGE,
-                    "priceMax must be >= 0",
-                    List.of("priceMax must be >= 0")
-            );
+            throw new ValidationException(ErrorCode.INVALID_PRICE_RANGE,
+                    "priceMax must be >= 0", List.of("priceMax must be >= 0"));
         }
-
         if (priceMin != null && priceMax != null && priceMin.compareTo(priceMax) > 0) {
             log.error("Rejecting property search: invalid price range.");
-            throw new ValidationException(
-                    ErrorCode.INVALID_PRICE_RANGE,
-                    "priceMin must be less than or equal to priceMax",
-                    List.of("priceMin > priceMax")
-            );
+            throw new ValidationException(ErrorCode.INVALID_PRICE_RANGE,
+                    "priceMin must be less than or equal to priceMax", List.of("priceMin > priceMax"));
         }
-
-        if (rooms != null && rooms <= 0) {
-            log.error("Rejecting property search: rooms must be > 0.");
-            throw new ValidationException(
-                    ErrorCode.INVALID_ROOMS,
-                    "rooms must be greater than zero",
-                    List.of("rooms must be > 0")
-            );
+        if (roomsMin != null && roomsMin <= 0) {
+            log.error("Rejecting property search: roomsMin must be > 0.");
+            throw new ValidationException(ErrorCode.INVALID_ROOMS,
+                    "roomsMin must be greater than zero", List.of("roomsMin must be > 0"));
+        }
+        if (roomsMax != null && roomsMax <= 0) {
+            log.error("Rejecting property search: roomsMax must be > 0.");
+            throw new ValidationException(ErrorCode.INVALID_ROOMS,
+                    "roomsMax must be greater than zero", List.of("roomsMax must be > 0"));
+        }
+        if (roomsMin != null && roomsMax != null && roomsMin > roomsMax) {
+            log.error("Rejecting property search: roomsMin > roomsMax.");
+            throw new ValidationException(ErrorCode.INVALID_ROOMS,
+                    "roomsMin must be less than or equal to roomsMax", List.of("roomsMin > roomsMax"));
+        }
+        if (size <= 0 || size > 100) {
+            log.error("Rejecting property search: invalid page size={}.", size);
+            throw new ValidationException(ErrorCode.INVALID_REQUEST,
+                    "size must be between 1 and 100", List.of("size must be between 1 and 100"));
+        }
+        if (page < 0) {
+            log.error("Rejecting property search: negative page={}.", page);
+            throw new ValidationException(ErrorCode.INVALID_REQUEST,
+                    "page must be >= 0", List.of("page must be >= 0"));
         }
 
         PropertyType parsedType = parsePropertyType(propertyType);
-        List<AgencyProperty> listings = agencyPropertyRepository.searchActiveListings(
-                city,
-                province,
-                parsedType,
-                rooms,
-                priceMin == null ? null : priceMin.doubleValue(),
-                priceMax == null ? null : priceMax.doubleValue(),
-                keyword
+        Page<AgencyProperty> resultPage = agencyPropertyRepository.searchActiveListings(
+                city, province, parsedType,
+                roomsMin, roomsMax,
+                priceMin  == null ? null : priceMin.doubleValue(),
+                priceMax  == null ? null : priceMax.doubleValue(),
+                keyword,
+                PageRequest.of(page, size)
         );
 
-        List<AgencyPropertyResponseDTO> results = listings.stream()
+        List<AgencyPropertyResponseDTO> content = resultPage.getContent()
+                .stream()
                 .map(this::toSearchResponse)
                 .toList();
 
-        log.info("Property search completed.");
-        return results;
+        log.info("Property search completed. page={}, size={}, total={}", page, size, resultPage.getTotalElements());
+        return new PagedResultDTO<>(content, page, size, resultPage.getTotalElements(), resultPage.getTotalPages());
     }
 
     private String normalizeString(String value) {

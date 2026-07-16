@@ -58,8 +58,8 @@ class BusinessValidationIntegrationTest extends BaseIntegrationTest {
         mockMvc.perform(get("/properties/search")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$.length()").value(greaterThan(0)));
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(greaterThan(0)));
     }
 
     @Test
@@ -71,8 +71,8 @@ class BusinessValidationIntegrationTest extends BaseIntegrationTest {
                         .param("city", "Buenos Aires")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$.length()").value(greaterThan(0)));
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(greaterThan(0)));
     }
 
     @Test
@@ -85,7 +85,7 @@ class BusinessValidationIntegrationTest extends BaseIntegrationTest {
                         .param("rooms", "3")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray());
+                .andExpect(jsonPath("$.content").isArray());
     }
 
     @Test
@@ -98,7 +98,7 @@ class BusinessValidationIntegrationTest extends BaseIntegrationTest {
                         .param("priceMax", "500000")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray());
+                .andExpect(jsonPath("$.content").isArray());
     }
 
     @Test
@@ -111,7 +111,7 @@ class BusinessValidationIntegrationTest extends BaseIntegrationTest {
                         .param("priceMax", "200000")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray());
+                .andExpect(jsonPath("$.content").isArray());
     }
 
     @Test
@@ -123,7 +123,7 @@ class BusinessValidationIntegrationTest extends BaseIntegrationTest {
                         .param("propertyType", "APARTMENT")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray());
+                .andExpect(jsonPath("$.content").isArray());
     }
 
     // E2E-7: Conflictos de Datos — Usuarios y Agencias

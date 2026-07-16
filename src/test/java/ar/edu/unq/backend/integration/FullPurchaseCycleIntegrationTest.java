@@ -70,8 +70,8 @@ class FullPurchaseCycleIntegrationTest extends BaseIntegrationTest {
         // 1. Buscar propiedades disponibles
         mockMvc.perform(get("/properties/search").param("city", "Buenos Aires")
                         .header("Authorization", "Bearer " + buyerToken))
-                .andExpect(status().isOk()).andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$.length()").value(greaterThan(0)));
+                .andExpect(status().isOk()).andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(greaterThan(0)));
 
         // 2. Ver detalle de la publicación
         mockMvc.perform(get("/agency-properties/" + agencyPropId).header("Authorization", "Bearer " + buyerToken))
