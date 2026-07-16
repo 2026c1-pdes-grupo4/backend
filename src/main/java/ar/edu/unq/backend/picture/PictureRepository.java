@@ -6,5 +6,6 @@ import java.util.List;
 
 public interface PictureRepository extends JpaRepository<Picture, Integer> {
     List<Picture> findByAgencyProperty_AgencyPropertyId(Integer agencyPropertyId);
+    void deleteByAgencyProperty_AgencyPropertyId(Integer agencyPropertyId);
 }
 

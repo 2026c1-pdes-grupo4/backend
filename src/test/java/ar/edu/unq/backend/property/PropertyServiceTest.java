@@ -20,6 +20,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -42,13 +43,105 @@ class PropertyServiceTest {
     @Test
     void searchThrowsWhenPriceRangeIsInvalid() {
         assertThrows(ValidationException.class, () -> propertyService.search(
-                null,
-                null,
-                null,
-                null,
-                BigDecimal.valueOf(100),
-                BigDecimal.valueOf(10),
-                null
+                null, null, null, null,
+                BigDecimal.valueOf(100), BigDecimal.valueOf(10), null
+        ));
+    }
+
+    @Test
+    void searchThrowsWhenPriceMinIsNegative() {
+        assertThrows(ValidationException.class, () -> propertyService.search(
+                null, null, null, null,
+                BigDecimal.valueOf(-1), null, null
+        ));
+    }
+
+    @Test
+    void searchThrowsWhenPriceMaxIsNegative() {
+        assertThrows(ValidationException.class, () -> propertyService.search(
+                null, null, null, null,
+                null, BigDecimal.valueOf(-500), null
+        ));
+    }
+
+    @Test
+    void searchThrowsWhenRoomsIsZero() {
+        assertThrows(ValidationException.class, () -> propertyService.search(
+                null, null, null, 0, null, null, null
+        ));
+    }
+
+    @Test
+    void searchThrowsWhenRoomsIsNegative() {
+        assertThrows(ValidationException.class, () -> propertyService.search(
+                null, null, null, -1, null, null, null
+        ));
+    }
+
+    @Test
+    void searchThrowsWhenPropertyTypeInvalid() {
+        assertThrows(ValidationException.class, () -> propertyService.search(
+                null, null, "LOT", null, null, null, null
+        ));
+    }
+
+    @Test
+    void searchTreatsEmptyStringCityAsNoFilter() {
+        when(agencyPropertyRepository.searchActiveListings(isNull(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of());
+
+        List<AgencyPropertyResponseDTO> result = propertyService.search(
+                "", null, null, null, null, null, null
+        );
+
+        assertTrue(result.isEmpty());
+        verify(agencyPropertyRepository).searchActiveListings(isNull(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void searchTreatsBlankStringKeywordAsNoFilter() {
+        when(agencyPropertyRepository.searchActiveListings(any(), any(), any(), any(), any(), any(), isNull()))
+                .thenReturn(List.of());
+
+        List<AgencyPropertyResponseDTO> result = propertyService.search(
+                null, null, null, null, null, null, "   "
+        );
+
+        assertTrue(result.isEmpty());
+        verify(agencyPropertyRepository).searchActiveListings(any(), any(), any(), any(), any(), any(), isNull());
+    }
+
+    @Test
+    void searchTrimsWhitespacesFromCity() {
+        when(agencyPropertyRepository.searchActiveListings(eq("Buenos Aires"), any(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of());
+
+        propertyService.search("  Buenos Aires  ", null, null, null, null, null, null);
+
+        verify(agencyPropertyRepository).searchActiveListings(eq("Buenos Aires"), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void searchReturnsEmptyListWhenNoResults() {
+        when(agencyPropertyRepository.searchActiveListings(any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of());
+
+        List<AgencyPropertyResponseDTO> result = propertyService.search(
+                "CiudadQueNoExiste", null, null, null, null, null, null
+        );
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void searchAcceptsPriceMinEqualToPriceMax() {
+        when(agencyPropertyRepository.searchActiveListings(any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of());
+
+        assertDoesNotThrow(() -> propertyService.search(
+                null, null, null, null,
+                BigDecimal.valueOf(100000), BigDecimal.valueOf(100000), null
         ));
     }
 
@@ -97,16 +190,119 @@ class PropertyServiceTest {
     }
 
     @Test
-    void searchThrowsWhenPropertyTypeInvalid() {
+    void searchPassesAllFiltersToRepository() {
+        when(agencyPropertyRepository.searchActiveListings(
+                eq("Buenos Aires"), eq("Buenos Aires"), eq(PropertyType.APARTMENT),
+                eq(3), eq(100000.0), eq(500000.0), eq("luminoso")))
+                .thenReturn(List.of());
+
+        propertyService.search("Buenos Aires", "Buenos Aires", "APARTMENT", 3,
+                BigDecimal.valueOf(100000), BigDecimal.valueOf(500000), "luminoso");
+
+        verify(agencyPropertyRepository).searchActiveListings(
+                eq("Buenos Aires"), eq("Buenos Aires"), eq(PropertyType.APARTMENT),
+                eq(3), eq(100000.0), eq(500000.0), eq("luminoso"));
+    }
+
+    @Test
+    void searchWithCityAndPriceRangePassesBothToRepository() {
+        when(agencyPropertyRepository.searchActiveListings(
+                eq("Rosario"), isNull(), isNull(), isNull(),
+                eq(50000.0), eq(200000.0), isNull()))
+                .thenReturn(List.of());
+
+        propertyService.search("Rosario", null, null, null,
+                BigDecimal.valueOf(50000), BigDecimal.valueOf(200000), null);
+
+        verify(agencyPropertyRepository).searchActiveListings(
+                eq("Rosario"), isNull(), isNull(), isNull(),
+                eq(50000.0), eq(200000.0), isNull());
+    }
+
+    @Test
+    void searchWithProvinceAndRoomsAndKeywordPassesAllToRepository() {
+        when(agencyPropertyRepository.searchActiveListings(
+                isNull(), eq("Santa Fe"), isNull(), eq(4),
+                isNull(), isNull(), eq("jardín")))
+                .thenReturn(List.of());
+
+        propertyService.search(null, "Santa Fe", null, 4, null, null, "jardín");
+
+        verify(agencyPropertyRepository).searchActiveListings(
+                isNull(), eq("Santa Fe"), isNull(), eq(4),
+                isNull(), isNull(), eq("jardín"));
+    }
+
+    @Test
+    void searchNormalizesBlankCityButPassesValidProvinceThrough() {
+        when(agencyPropertyRepository.searchActiveListings(
+                isNull(), eq("Córdoba"), any(), any(), any(), any(), any()))
+                .thenReturn(List.of());
+
+        propertyService.search("   ", "Córdoba", null, null, null, null, null);
+
+        verify(agencyPropertyRepository).searchActiveListings(
+                isNull(), eq("Córdoba"), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void searchThrowsForNegativePriceMinEvenWhenOtherFiltersAreValid() {
         assertThrows(ValidationException.class, () -> propertyService.search(
-                null,
-                null,
-                "LOT",
-                null,
-                null,
-                null,
-                null
+                "Buenos Aires", "Buenos Aires", "HOUSE", 3,
+                BigDecimal.valueOf(-1), BigDecimal.valueOf(500000), "casa"
         ));
+    }
+
+    @Test
+    void searchThrowsForInvalidRoomsEvenWhenPriceRangeIsValid() {
+        assertThrows(ValidationException.class, () -> propertyService.search(
+                "Córdoba", null, "APARTMENT", 0,
+                BigDecimal.valueOf(50000), BigDecimal.valueOf(200000), null
+        ));
+    }
+
+    @Test
+    void searchWithAllFiltersNullReturnsAllActiveListings() {
+        AgencyPropertyResponseDTO dto = new AgencyPropertyResponseDTO();
+        AgencyProperty ap = new AgencyProperty();
+        ap.setAgencyPropertyId(1);
+
+        when(agencyPropertyRepository.searchActiveListings(
+                isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), isNull()))
+                .thenReturn(List.of(ap));
+        when(agencyPropertyMapper.mapToResponse(ap)).thenReturn(dto);
+        when(pictureService.firstPictureUrl(1)).thenReturn(null);
+
+        List<AgencyPropertyResponseDTO> result = propertyService.search(
+                null, null, null, null, null, null, null);
+
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void searchWithPropertyTypeAndRoomsPassesParsedTypeToRepository() {
+        when(agencyPropertyRepository.searchActiveListings(
+                isNull(), isNull(), eq(PropertyType.HOUSE), eq(5),
+                isNull(), isNull(), isNull()))
+                .thenReturn(List.of());
+
+        propertyService.search(null, null, "house", 5, null, null, null);
+
+        verify(agencyPropertyRepository).searchActiveListings(
+                isNull(), isNull(), eq(PropertyType.HOUSE), eq(5),
+                isNull(), isNull(), isNull());
+    }
+
+    @Test
+    void searchTrimsAllStringFiltersBeforePassingToRepository() {
+        when(agencyPropertyRepository.searchActiveListings(
+                eq("Buenos Aires"), eq("Buenos Aires"), any(), any(), any(), any(), eq("luminoso")))
+                .thenReturn(List.of());
+
+        propertyService.search("  Buenos Aires  ", "  Buenos Aires  ", null, null, null, null, "  luminoso  ");
+
+        verify(agencyPropertyRepository).searchActiveListings(
+                eq("Buenos Aires"), eq("Buenos Aires"), any(), any(), any(), any(), eq("luminoso"));
     }
 
     @Test

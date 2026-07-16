@@ -86,6 +86,7 @@ public class PropertyService {
      */
     @Transactional
     public PropertyResponseDTO create(PropertyRequestDTO dto) {
+        log.info("Property: {}", dto.toString());
         Property p = propertyMapper.toEntity(dto);
         p.setAvailable(true);
 
@@ -148,12 +149,45 @@ public class PropertyService {
 
     public List<AgencyPropertyResponseDTO> search(String city, String province, String propertyType, Integer rooms,
             BigDecimal priceMin, BigDecimal priceMax, String keyword) {
+
+        // Normalizar strings: vacíos o blancos se tratan como sin filtro; los válidos se trimean
+        city = normalizeString(city);
+        province = normalizeString(province);
+        keyword = normalizeString(keyword);
+
+        if (priceMin != null && priceMin.signum() < 0) {
+            log.error("Rejecting property search: priceMin is negative.");
+            throw new ValidationException(
+                    ErrorCode.INVALID_PRICE_RANGE,
+                    "priceMin must be >= 0",
+                    List.of("priceMin must be >= 0")
+            );
+        }
+
+        if (priceMax != null && priceMax.signum() < 0) {
+            log.error("Rejecting property search: priceMax is negative.");
+            throw new ValidationException(
+                    ErrorCode.INVALID_PRICE_RANGE,
+                    "priceMax must be >= 0",
+                    List.of("priceMax must be >= 0")
+            );
+        }
+
         if (priceMin != null && priceMax != null && priceMin.compareTo(priceMax) > 0) {
             log.error("Rejecting property search: invalid price range.");
             throw new ValidationException(
                     ErrorCode.INVALID_PRICE_RANGE,
                     "priceMin must be less than or equal to priceMax",
                     List.of("priceMin > priceMax")
+            );
+        }
+
+        if (rooms != null && rooms <= 0) {
+            log.error("Rejecting property search: rooms must be > 0.");
+            throw new ValidationException(
+                    ErrorCode.INVALID_ROOMS,
+                    "rooms must be greater than zero",
+                    List.of("rooms must be > 0")
             );
         }
 
@@ -174,6 +208,11 @@ public class PropertyService {
 
         log.info("Property search completed.");
         return results;
+    }
+
+    private String normalizeString(String value) {
+        if (value == null || value.isBlank()) return null;
+        return value.trim();
     }
 
     private PropertyType parsePropertyType(String propertyType) {
