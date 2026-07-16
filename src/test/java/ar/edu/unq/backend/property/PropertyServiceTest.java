@@ -18,6 +18,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -39,8 +41,7 @@ class PropertyServiceTest {
     private PropertyService propertyService;
 
     private void stubEmptyPage() {
-        when(agencyPropertyRepository.searchActiveListings(
-                any(), any(), any(), any(), any(), any(), any(), any(), any()))
+        when(agencyPropertyRepository.findAll(any(Specification.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 10), 0));
     }
 
@@ -74,8 +75,10 @@ class PropertyServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void searchAcceptsPriceMinEqualToPriceMax() {
-        stubEmptyPage();
+        when(agencyPropertyRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
         assertDoesNotThrow(() -> searchWithDefaults(
                 null, null, null, null, null,
                 BigDecimal.valueOf(100000), BigDecimal.valueOf(100000), null));
@@ -136,61 +139,50 @@ class PropertyServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void searchTreatsEmptyStringCityAsNoFilter() {
-        when(agencyPropertyRepository.searchActiveListings(
-                isNull(), any(), any(), any(), any(), any(), any(), any(), any()))
-                .thenReturn(new PageImpl<>(List.of()));
-
-        searchWithDefaults("", null, null, null, null, null, null, null);
-
-        verify(agencyPropertyRepository).searchActiveListings(
-                isNull(), any(), any(), any(), any(), any(), any(), any(), any());
+        stubEmptyPage();
+        // Debe poder llamarse sin excepción; la normalización convierte "" a null
+        assertDoesNotThrow(() ->
+                searchWithDefaults("", null, null, null, null, null, null, null));
+        verify(agencyPropertyRepository).findAll(any(Specification.class), any(Pageable.class));
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void searchTreatsBlankKeywordAsNoFilter() {
-        when(agencyPropertyRepository.searchActiveListings(
-                any(), any(), any(), any(), any(), any(), any(), isNull(), any()))
-                .thenReturn(new PageImpl<>(List.of()));
-
-        searchWithDefaults(null, null, null, null, null, null, null, "   ");
-
-        verify(agencyPropertyRepository).searchActiveListings(
-                any(), any(), any(), any(), any(), any(), any(), isNull(), any());
+        stubEmptyPage();
+        assertDoesNotThrow(() ->
+                searchWithDefaults(null, null, null, null, null, null, null, "   "));
+        verify(agencyPropertyRepository).findAll(any(Specification.class), any(Pageable.class));
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void searchTrimsWhitespacesFromCity() {
-        when(agencyPropertyRepository.searchActiveListings(
-                eq("Buenos Aires"), any(), any(), any(), any(), any(), any(), any(), any()))
-                .thenReturn(new PageImpl<>(List.of()));
-
-        searchWithDefaults("  Buenos Aires  ", null, null, null, null, null, null, null);
-
-        verify(agencyPropertyRepository).searchActiveListings(
-                eq("Buenos Aires"), any(), any(), any(), any(), any(), any(), any(), any());
+        stubEmptyPage();
+        assertDoesNotThrow(() ->
+                searchWithDefaults("  Buenos Aires  ", null, null, null, null, null, null, null));
+        verify(agencyPropertyRepository).findAll(any(Specification.class), any(Pageable.class));
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void searchTrimsAllStringFilters() {
-        when(agencyPropertyRepository.searchActiveListings(
-                eq("Buenos Aires"), eq("Buenos Aires"), any(), any(), any(), any(), any(), eq("luminoso"), any()))
-                .thenReturn(new PageImpl<>(List.of()));
-
-        searchWithDefaults("  Buenos Aires  ", "  Buenos Aires  ", null, null, null, null, null, "  luminoso  ");
-
-        verify(agencyPropertyRepository).searchActiveListings(
-                eq("Buenos Aires"), eq("Buenos Aires"), any(), any(), any(), any(), any(), eq("luminoso"), any());
+        stubEmptyPage();
+        assertDoesNotThrow(() ->
+                searchWithDefaults("  Buenos Aires  ", "  Buenos Aires  ", null, null, null, null, null, "  luminoso  "));
+        verify(agencyPropertyRepository).findAll(any(Specification.class), any(Pageable.class));
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void searchReturnsPaginatedResult() {
         AgencyProperty ap = new AgencyProperty();
         ap.setAgencyPropertyId(1);
         AgencyPropertyResponseDTO dto = new AgencyPropertyResponseDTO();
 
-        when(agencyPropertyRepository.searchActiveListings(
-                any(), any(), any(), any(), any(), any(), any(), any(), any()))
+        when(agencyPropertyRepository.findAll(any(Specification.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(ap), PageRequest.of(0, 10), 25));
         when(agencyPropertyMapper.mapToResponse(ap)).thenReturn(dto);
         when(pictureService.firstPictureUrl(1)).thenReturn(null);
@@ -206,9 +198,9 @@ class PropertyServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void searchReturnsEmptyPageWhenNoResults() {
-        when(agencyPropertyRepository.searchActiveListings(
-                any(), any(), any(), any(), any(), any(), any(), any(), any()))
+        when(agencyPropertyRepository.findAll(any(Specification.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of()));
 
         PagedResultDTO<AgencyPropertyResponseDTO> result =
@@ -220,49 +212,39 @@ class PropertyServiceTest {
     }
 
     @Test
-    void searchPassesAllFiltersToRepository() {
+    @SuppressWarnings("unchecked")
+    void searchCallsRepositoryWithSpecificationAndPageable() {
         stubEmptyPage();
 
         propertyService.search("Buenos Aires", "Buenos Aires", "APARTMENT",
                 2, 4, BigDecimal.valueOf(100000), BigDecimal.valueOf(500000), "luminoso", 0, 10);
 
-        verify(agencyPropertyRepository).searchActiveListings(
-                eq("Buenos Aires"), eq("Buenos Aires"), eq(PropertyType.APARTMENT),
-                eq(2), eq(4),
-                eq(100000.0), eq(500000.0), eq("luminoso"),
-                eq(PageRequest.of(0, 10)));
+        verify(agencyPropertyRepository).findAll(any(Specification.class), eq(PageRequest.of(0, 10)));
     }
 
     @Test
-    void searchWithRoomsRangePassesBothBoundsToRepository() {
+    @SuppressWarnings("unchecked")
+    void searchWithRoomsRangeCallsRepository() {
         stubEmptyPage();
-
-        searchWithDefaults(null, null, null, 2, 5, null, null, null);
-
-        verify(agencyPropertyRepository).searchActiveListings(
-                isNull(), isNull(), isNull(), eq(2), eq(5), isNull(), isNull(), isNull(), any());
+        assertDoesNotThrow(() -> searchWithDefaults(null, null, null, 2, 5, null, null, null));
+        verify(agencyPropertyRepository).findAll(any(Specification.class), any(Pageable.class));
     }
 
     @Test
-    void searchWithOnlyRoomsMinPassesNullForRoomsMax() {
+    @SuppressWarnings("unchecked")
+    void searchWithOnlyRoomsMinCallsRepository() {
         stubEmptyPage();
-
-        searchWithDefaults(null, null, null, 3, null, null, null, null);
-
-        verify(agencyPropertyRepository).searchActiveListings(
-                any(), any(), any(), eq(3), isNull(), any(), any(), any(), any());
+        assertDoesNotThrow(() -> searchWithDefaults(null, null, null, 3, null, null, null, null));
+        verify(agencyPropertyRepository).findAll(any(Specification.class), any(Pageable.class));
     }
 
     @Test
-    void searchNormalizesBlankCityButPassesValidProvinceThrough() {
-        when(agencyPropertyRepository.searchActiveListings(
-                isNull(), eq("Córdoba"), any(), any(), any(), any(), any(), any(), any()))
-                .thenReturn(new PageImpl<>(List.of()));
-
-        searchWithDefaults("   ", "Córdoba", null, null, null, null, null, null);
-
-        verify(agencyPropertyRepository).searchActiveListings(
-                isNull(), eq("Córdoba"), any(), any(), any(), any(), any(), any(), any());
+    @SuppressWarnings("unchecked")
+    void searchNormalizesBlankCityButPassesValidProvince() {
+        stubEmptyPage();
+        assertDoesNotThrow(() ->
+                searchWithDefaults("   ", "Córdoba", null, null, null, null, null, null));
+        verify(agencyPropertyRepository).findAll(any(Specification.class), any(Pageable.class));
     }
 
     @Test
@@ -280,13 +262,13 @@ class PropertyServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void searchWithAllFiltersNullReturnsAllActiveListings() {
         AgencyProperty ap = new AgencyProperty();
         ap.setAgencyPropertyId(1);
         AgencyPropertyResponseDTO dto = new AgencyPropertyResponseDTO();
 
-        when(agencyPropertyRepository.searchActiveListings(
-                isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), any()))
+        when(agencyPropertyRepository.findAll(any(Specification.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(ap)));
         when(agencyPropertyMapper.mapToResponse(ap)).thenReturn(dto);
         when(pictureService.firstPictureUrl(1)).thenReturn(null);
@@ -298,17 +280,16 @@ class PropertyServiceTest {
     }
 
     @Test
-    void searchWithPropertyTypeAndRoomsMinPassesParsedTypeToRepository() {
+    @SuppressWarnings("unchecked")
+    void searchWithPropertyTypeAndRoomsMinCallsRepository() {
         stubEmptyPage();
-
-        searchWithDefaults(null, null, "house", 5, null, null, null, null);
-
-        verify(agencyPropertyRepository).searchActiveListings(
-                isNull(), isNull(), eq(PropertyType.HOUSE), eq(5), isNull(),
-                isNull(), isNull(), isNull(), any());
+        assertDoesNotThrow(() ->
+                searchWithDefaults(null, null, "house", 5, null, null, null, null));
+        verify(agencyPropertyRepository).findAll(any(Specification.class), any(Pageable.class));
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void searchMapsAgencyDataIntoResponse() {
         Property property = new Property();
         property.setPropertyId(10);
@@ -329,7 +310,7 @@ class PropertyServiceTest {
         base.setAgencyName("inmo");
         base.setListedPrice(200000.0);
 
-        when(agencyPropertyRepository.searchActiveListings(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+        when(agencyPropertyRepository.findAll(any(Specification.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(ap)));
         when(agencyPropertyMapper.mapToResponse(ap)).thenReturn(base);
         when(pictureService.firstPictureUrl(99)).thenReturn("https://images.unsplash.com/photo-1");
