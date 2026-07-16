@@ -1,5 +1,6 @@
 package ar.edu.unq.backend.property;
 
+import ar.edu.unq.backend.agency_property.AgencyPropertyResponseDTO;
 import ar.edu.unq.backend.property.dto.PropertyRequestDTO;
 import ar.edu.unq.backend.property.dto.PropertyResponseDTO;
 import org.springframework.http.HttpStatus;
@@ -53,7 +54,7 @@ public class PropertyController {
 
     @GetMapping("/search")
     @PreAuthorize("isAuthenticated()")
-    public List<PropertyResponseDTO> search(@RequestParam(required = false) String city, @RequestParam(required = false) String province,
+    public List<AgencyPropertyResponseDTO> search(@RequestParam(required = false) String city, @RequestParam(required = false) String province,
                                             @RequestParam(required = false) String propertyType, @RequestParam(required = false) Integer rooms,
                                             @RequestParam(required = false) BigDecimal priceMin, @RequestParam(required = false) BigDecimal priceMax,
                                             @RequestParam(required = false) String keyword) {

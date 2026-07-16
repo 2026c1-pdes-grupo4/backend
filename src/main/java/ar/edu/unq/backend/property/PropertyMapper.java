@@ -12,10 +12,6 @@ import java.util.List;
 public interface PropertyMapper {
 
     @Mapping(target = "id", source = "propertyId")
-    @Mapping(target = "listedPrice", ignore = true)
-    @Mapping(target = "agencyId", ignore = true)
-    @Mapping(target = "agencyName", ignore = true)
-    @Mapping(target = "imageUrl", ignore = true)
     PropertyResponseDTO toResponse(Property property);
 
     List<PropertyResponseDTO> toResponseList(List<Property> properties);

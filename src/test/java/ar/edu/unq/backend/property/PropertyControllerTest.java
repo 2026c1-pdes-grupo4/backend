@@ -1,5 +1,6 @@
 package ar.edu.unq.backend.property;
 
+import ar.edu.unq.backend.agency_property.AgencyPropertyResponseDTO;
 import ar.edu.unq.backend.auth.JwtService;
 import ar.edu.unq.backend.config.SecurityConfig;
 import ar.edu.unq.backend.property.dto.PropertyRequestDTO;
@@ -14,7 +15,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -150,10 +150,10 @@ class PropertyControllerTest {
     @Test
     @WithMockUser
     void searchReturns200WithMatchingResults() throws Exception {
-        PropertyResponseDTO dto = new PropertyResponseDTO();
+        AgencyPropertyResponseDTO dto = new AgencyPropertyResponseDTO();
         dto.setId(2);
         dto.setCity("Rosario");
-        dto.setListedPrice(BigDecimal.valueOf(150000));
+        dto.setListedPrice(150000.0);
 
         when(propertyService.search(eq("Rosario"), isNull(), isNull(), isNull(), isNull(), isNull(), isNull()))
                 .thenReturn(List.of(dto));

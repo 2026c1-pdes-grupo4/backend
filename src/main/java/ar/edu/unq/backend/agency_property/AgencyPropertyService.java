@@ -8,6 +8,7 @@ import ar.edu.unq.backend.common.exception.ConflictException;
 import ar.edu.unq.backend.common.exception.ForbiddenException;
 import ar.edu.unq.backend.common.exception.NotFoundException;
 import ar.edu.unq.backend.common.exception.ValidationException;
+import ar.edu.unq.backend.picture.PictureService;
 import ar.edu.unq.backend.property.Property;
 import ar.edu.unq.backend.property.PropertyRepository;
 import org.slf4j.Logger;
@@ -30,14 +31,23 @@ public class AgencyPropertyService {
     private final AgencyRepository agencyRepository;
     private final AgencyPropertyMapper agencyPropertyMapper;
     private final JwtAuthUtils jwtAuthUtils;
+    private final PictureService pictureService;
 
     public AgencyPropertyService(AgencyPropertyRepository agencyPropertyRepository, PropertyRepository propertyRepository,
-                                 AgencyRepository agencyRepository, AgencyPropertyMapper agencyPropertyMapper, JwtAuthUtils jwtAuthUtils) {
+                                 AgencyRepository agencyRepository, AgencyPropertyMapper agencyPropertyMapper, JwtAuthUtils jwtAuthUtils,
+                                 PictureService pictureService) {
         this.agencyPropertyRepository = agencyPropertyRepository;
         this.propertyRepository = propertyRepository;
         this.agencyRepository = agencyRepository;
         this.agencyPropertyMapper = agencyPropertyMapper;
         this.jwtAuthUtils = jwtAuthUtils;
+        this.pictureService = pictureService;
+    }
+
+    private AgencyPropertyResponseDTO toResponseWithImage(AgencyProperty ap) {
+        AgencyPropertyResponseDTO dto = agencyPropertyMapper.mapToResponse(ap);
+        dto.setImageUrl(pictureService.firstPictureUrl(ap.getAgencyPropertyId()));
+        return dto;
     }
 
     /**
@@ -84,7 +94,7 @@ public class AgencyPropertyService {
         ap.setListedPrice(dto.getListedPrice().doubleValue());
         ap.setListedDate(LocalDate.now());
 
-        AgencyPropertyResponseDTO response = agencyPropertyMapper.mapToResponse(agencyPropertyRepository.save(ap));
+        AgencyPropertyResponseDTO response = toResponseWithImage(agencyPropertyRepository.save(ap));
         log.info("Property published successfully. agencyId={}, propertyId={}", agencyId, dto.getPropertyId());
         return response;
     }
@@ -111,7 +121,7 @@ public class AgencyPropertyService {
         }
 
         log.info("Agency property publication found. agencyPropertyId={}", id);
-        return agencyPropertyMapper.mapToResponse(ap);
+        return toResponseWithImage(ap);
     }
 
     /**
@@ -125,7 +135,7 @@ public class AgencyPropertyService {
 
         List<AgencyPropertyResponseDTO> result = agencyPropertyRepository.findByAgency_AgencyIdAndDeletedFalse(agencyId)
                 .stream()
-                .map(agencyPropertyMapper::mapToResponse)
+                .map(this::toResponseWithImage)
                 .toList();
 
         log.info("Publications found for agency. agencyId={}, count={}", agencyId, result.size());
@@ -167,7 +177,7 @@ public class AgencyPropertyService {
 
         ap.setListedPrice(dto.getListedPrice().doubleValue());
 
-        AgencyPropertyResponseDTO response = agencyPropertyMapper.mapToResponse(agencyPropertyRepository.save(ap));
+        AgencyPropertyResponseDTO response = toResponseWithImage(agencyPropertyRepository.save(ap));
         log.info("Publication price updated successfully.");
         return response;
     }

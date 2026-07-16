@@ -1,12 +1,13 @@
 package ar.edu.unq.backend.property;
 
 import ar.edu.unq.backend.agency_property.AgencyProperty;
+import ar.edu.unq.backend.agency_property.AgencyPropertyMapper;
 import ar.edu.unq.backend.agency_property.AgencyPropertyRepository;
+import ar.edu.unq.backend.agency_property.AgencyPropertyResponseDTO;
 import ar.edu.unq.backend.common.error.ErrorCode;
 import ar.edu.unq.backend.common.exception.NotFoundException;
 import ar.edu.unq.backend.common.exception.ValidationException;
-import ar.edu.unq.backend.picture.Picture;
-import ar.edu.unq.backend.picture.PictureRepository;
+import ar.edu.unq.backend.picture.PictureService;
 import ar.edu.unq.backend.property.dto.PropertyRequestDTO;
 import ar.edu.unq.backend.property.dto.PropertyResponseDTO;
 import org.slf4j.Logger;
@@ -29,16 +30,19 @@ public class PropertyService {
     private final PropertyRepository propertyRepository;
     private final AgencyPropertyRepository agencyPropertyRepository;
     private final PropertyMapper propertyMapper;
-    private final PictureRepository pictureRepository;
+    private final AgencyPropertyMapper agencyPropertyMapper;
+    private final PictureService pictureService;
 
     public PropertyService(PropertyRepository propertyRepository,
                            AgencyPropertyRepository agencyPropertyRepository,
                            PropertyMapper propertyMapper,
-                           PictureRepository pictureRepository) {
+                           AgencyPropertyMapper agencyPropertyMapper,
+                           PictureService pictureService) {
         this.propertyRepository = propertyRepository;
         this.agencyPropertyRepository = agencyPropertyRepository;
         this.propertyMapper = propertyMapper;
-        this.pictureRepository = pictureRepository;
+        this.agencyPropertyMapper = agencyPropertyMapper;
+        this.pictureService = pictureService;
     }
 
     /**
@@ -142,7 +146,7 @@ public class PropertyService {
         log.info("Property deleted. propertyId={}", id);
     }
 
-    public List<PropertyResponseDTO> search(String city, String province, String propertyType, Integer rooms,
+    public List<AgencyPropertyResponseDTO> search(String city, String province, String propertyType, Integer rooms,
             BigDecimal priceMin, BigDecimal priceMax, String keyword) {
         if (priceMin != null && priceMax != null && priceMin.compareTo(priceMax) > 0) {
             log.error("Rejecting property search: invalid price range.");
@@ -164,7 +168,7 @@ public class PropertyService {
                 keyword
         );
 
-        List<PropertyResponseDTO> results = listings.stream()
+        List<AgencyPropertyResponseDTO> results = listings.stream()
                 .map(this::toSearchResponse)
                 .toList();
 
@@ -189,21 +193,9 @@ public class PropertyService {
         }
     }
 
-    private PropertyResponseDTO toSearchResponse(AgencyProperty listing) {
-        PropertyResponseDTO dto = propertyMapper.toResponse(listing.getProperty());
-        dto.setAgencyPropertyId(listing.getAgencyPropertyId());
-        dto.setListedPrice(BigDecimal.valueOf(listing.getListedPrice()));
-        dto.setAgencyId(listing.getAgency().getAgencyId());
-        dto.setAgencyName(listing.getAgency().getUsername());
-        dto.setImageUrl(firstPictureUrl(listing.getAgencyPropertyId()));
+    private AgencyPropertyResponseDTO toSearchResponse(AgencyProperty listing) {
+        AgencyPropertyResponseDTO dto = agencyPropertyMapper.mapToResponse(listing);
+        dto.setImageUrl(pictureService.firstPictureUrl(listing.getAgencyPropertyId()));
         return dto;
-    }
-
-    private String firstPictureUrl(Integer agencyPropertyId) {
-        return pictureRepository.findByAgencyProperty_AgencyPropertyId(agencyPropertyId)
-                .stream()
-                .findFirst()
-                .map(Picture::getUrl)
-                .orElse(null);
     }
 }

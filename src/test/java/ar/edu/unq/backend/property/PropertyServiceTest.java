@@ -2,11 +2,12 @@ package ar.edu.unq.backend.property;
 
 import ar.edu.unq.backend.agency.Agency;
 import ar.edu.unq.backend.agency_property.AgencyProperty;
+import ar.edu.unq.backend.agency_property.AgencyPropertyMapper;
 import ar.edu.unq.backend.agency_property.AgencyPropertyRepository;
+import ar.edu.unq.backend.agency_property.AgencyPropertyResponseDTO;
 import ar.edu.unq.backend.common.exception.NotFoundException;
 import ar.edu.unq.backend.common.exception.ValidationException;
-import ar.edu.unq.backend.picture.Picture;
-import ar.edu.unq.backend.picture.PictureRepository;
+import ar.edu.unq.backend.picture.PictureService;
 import ar.edu.unq.backend.property.dto.PropertyRequestDTO;
 import ar.edu.unq.backend.property.dto.PropertyResponseDTO;
 import org.junit.jupiter.api.Test;
@@ -31,7 +32,9 @@ class PropertyServiceTest {
     @Mock
     private PropertyMapper propertyMapper;
     @Mock
-    private PictureRepository pictureRepository;
+    private AgencyPropertyMapper agencyPropertyMapper;
+    @Mock
+    private PictureService pictureService;
 
     @InjectMocks
     private PropertyService propertyService;
@@ -66,18 +69,17 @@ class PropertyServiceTest {
         ap.setAgency(agency);
         ap.setListedPrice(200000.0);
 
-        PropertyResponseDTO base = new PropertyResponseDTO();
-        base.setId(10);
-
-        Picture picture = new Picture();
-        picture.setUrl("https://images.unsplash.com/photo-1");
+        AgencyPropertyResponseDTO base = new AgencyPropertyResponseDTO();
+        base.setAgencyId(7);
+        base.setAgencyName("inmo");
+        base.setListedPrice(200000.0);
 
         when(agencyPropertyRepository.searchActiveListings(any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(List.of(ap));
-        when(propertyMapper.toResponse(property)).thenReturn(base);
-        when(pictureRepository.findByAgencyProperty_AgencyPropertyId(99)).thenReturn(List.of(picture));
+        when(agencyPropertyMapper.mapToResponse(ap)).thenReturn(base);
+        when(pictureService.firstPictureUrl(99)).thenReturn("https://images.unsplash.com/photo-1");
 
-        List<PropertyResponseDTO> result = propertyService.search(
+        List<AgencyPropertyResponseDTO> result = propertyService.search(
                 "Buenos Aires",
                 null,
                 null,
@@ -90,7 +92,7 @@ class PropertyServiceTest {
         assertEquals(1, result.size());
         assertEquals(7, result.get(0).getAgencyId());
         assertEquals("inmo", result.get(0).getAgencyName());
-        assertEquals(BigDecimal.valueOf(200000.0), result.get(0).getListedPrice());
+        assertEquals(200000.0, result.get(0).getListedPrice());
         assertEquals("https://images.unsplash.com/photo-1", result.get(0).getImageUrl());
     }
 
