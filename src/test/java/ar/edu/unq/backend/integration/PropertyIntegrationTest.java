@@ -30,8 +30,8 @@ class PropertyIntegrationTest extends BaseIntegrationTest {
                         .param("city", "Buenos Aires")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$.length()").value(org.hamcrest.Matchers.greaterThan(0)));
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(org.hamcrest.Matchers.greaterThan(0)));
     }
 
     @Test

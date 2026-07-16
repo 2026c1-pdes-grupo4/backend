@@ -129,7 +129,7 @@ class AgencyPropertyControllerTest {
 
         AgencyPropertyResponseDTO resp = buildResponse(6, "Colon 55", "Cordoba");
         resp.setListedPrice(300000.0);
-        when(agencyPropertyService.updatePrice(eq(6), any())).thenReturn(resp);
+        when(agencyPropertyService.update(eq(6), any())).thenReturn(resp);
 
         mockMvc.perform(put("/agency-properties/6")
                         .with(csrf())

@@ -40,8 +40,8 @@ public class AgencyPropertyController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('AGENCY')")
-    public AgencyPropertyResponseDTO updatePrice(@PathVariable Integer id, @RequestBody AgencyPropertyRequestDTO dto) {
-        return service.updatePrice(id, dto);
+    public AgencyPropertyResponseDTO update(@PathVariable Integer id, @RequestBody AgencyPropertyRequestDTO dto) {
+        return service.update(id, dto);
     }
 
     @DeleteMapping("/{id}")

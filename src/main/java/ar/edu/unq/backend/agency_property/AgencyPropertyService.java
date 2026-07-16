@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 /**
  * Servicio que gestiona las publicaciones de propiedades por parte de las agencias.
@@ -34,8 +36,8 @@ public class AgencyPropertyService {
     private final PictureService pictureService;
 
     public AgencyPropertyService(AgencyPropertyRepository agencyPropertyRepository, PropertyRepository propertyRepository,
-                                 AgencyRepository agencyRepository, AgencyPropertyMapper agencyPropertyMapper, JwtAuthUtils jwtAuthUtils,
-                                 PictureService pictureService) {
+                                 AgencyRepository agencyRepository, AgencyPropertyMapper agencyPropertyMapper,
+                                 JwtAuthUtils jwtAuthUtils, PictureService pictureService) {
         this.agencyPropertyRepository = agencyPropertyRepository;
         this.propertyRepository = propertyRepository;
         this.agencyRepository = agencyRepository;
@@ -53,11 +55,13 @@ public class AgencyPropertyService {
     /**
      * Publica una propiedad asociándola a la agencia autenticada.
      * Registra automáticamente la fecha de publicación.
+     * Si se incluyen {@code imageUrls} en el request, se persisten como imágenes de la publicación.
      *
-     * @param dto datos de la publicación, incluyendo el id de la propiedad y el precio
+     * @param dto datos de la publicación, incluyendo el id de la propiedad, el precio e imágenes opcionales
      * @return la publicación creada como DTO de respuesta
      * @throws RuntimeException si la agencia o la propiedad no existen,
-     *                                 400 si la propiedad ya fue publicada por esta agencia
+     *                                 400 si la propiedad ya fue vendida,
+     *                                 409 si la propiedad ya fue publicada por esta agencia
      */
     public AgencyPropertyResponseDTO publish(AgencyPropertyRequestDTO dto) {
         Integer agencyId = jwtAuthUtils.getCurrentId();
@@ -77,7 +81,12 @@ public class AgencyPropertyService {
 
         validateListedPrice(dto);
 
-        if (agencyPropertyRepository.existsByAgency_AgencyIdAndProperty_PropertyId(agencyId, property.getPropertyId())) {
+        if (!property.getAvailable()) {
+            log.error("Rejecting publication: property already sold. agencyId={}, propertyId={}", agencyId, property.getPropertyId());
+            throw new ValidationException(ErrorCode.PROPERTY_ALREADY_SOLD, "Cannot publish a sold property");
+        }
+
+        if (agencyPropertyRepository.existsByAgency_AgencyIdAndProperty_PropertyIdAndDeletedFalse(agencyId, property.getPropertyId())) {
             log.error("Rejecting publication: already published by agency. agencyId={}, propertyId={}", agencyId, property.getPropertyId());
             throw new ConflictException(ErrorCode.PUBLICATION_ALREADY_EXISTS_FOR_AGENCY, "Property already published by this agency");
         }
@@ -87,10 +96,13 @@ public class AgencyPropertyService {
         ap.setProperty(property);
         ap.setListedPrice(dto.getListedPrice().doubleValue());
         ap.setListedDate(LocalDate.now());
-        ap.getProperty().setAvailable(true);
 
-        AgencyPropertyResponseDTO response = toResponseWithImage(agencyPropertyRepository.save(ap));
-        log.info("Property published successfully. agencyId={}, propertyId={}", agencyId, dto.getPropertyId());
+        AgencyProperty saved = agencyPropertyRepository.save(ap);
+        pictureService.saveForListing(saved, dto.getImageUrl());
+
+        AgencyPropertyResponseDTO response = toResponseWithImage(saved);
+        log.info("Property published successfully. agencyId={}, propertyId={}, hasImage={}",
+                agencyId, dto.getPropertyId(), dto.getImageUrl() != null && !dto.getImageUrl().isBlank());
         return response;
     }
 
@@ -110,6 +122,11 @@ public class AgencyPropertyService {
                             ErrorCode.AGENCY_PROPERTY_NOT_FOUND, "Agency property not found");
                 });
 
+        if (ap.getDeleted()) {
+            log.error("Agency publication not found (soft-deleted). agencyPropertyId={}", id);
+            throw new NotFoundException(ErrorCode.AGENCY_PROPERTY_NOT_FOUND, "Agency property not found");
+        }
+
         log.info("Agency property publication found. agencyPropertyId={}", id);
         return toResponseWithImage(ap);
     }
@@ -123,7 +140,7 @@ public class AgencyPropertyService {
         Integer agencyId = jwtAuthUtils.getCurrentId();
         log.info("Fetching publications for current agency. agencyId={}", agencyId);
 
-        List<AgencyPropertyResponseDTO> result = agencyPropertyRepository.findByAgency_AgencyId(agencyId)
+        List<AgencyPropertyResponseDTO> result = agencyPropertyRepository.findByAgency_AgencyIdAndDeletedFalse(agencyId)
                 .stream()
                 .map(this::toResponseWithImage)
                 .toList();
@@ -133,27 +150,32 @@ public class AgencyPropertyService {
     }
 
     /**
-     * Actualiza el precio de una publicación existente.
+     * Actualiza los datos de la propiedad asociada a una publicación.
      * Solo la agencia propietaria puede modificarla.
      *
      * @param id  identificador de la publicación
-     * @param dto datos con el nuevo precio
+     * @param dto datos con los nuevos datos de propiedad
      * @return la publicación actualizada como DTO de respuesta
      * @throws RuntimeException si la publicación no existe,
      *                                 403 si la agencia autenticada no es la propietaria
      */
-    public AgencyPropertyResponseDTO updatePrice(Integer id, AgencyPropertyRequestDTO dto) {
+    public AgencyPropertyResponseDTO update(Integer id, AgencyPropertyRequestDTO dto) {
         Integer agencyId = jwtAuthUtils.getCurrentId();
-        log.info("Updating publication price. agencyPropertyId={}, agencyId={}", id, agencyId);
+        log.info("Updating publication. agencyPropertyId={}, agencyId={}", id, agencyId);
 
         AgencyProperty ap = agencyPropertyRepository.findById(id)
                 .orElseThrow(() -> {
-                    log.error("Cannot update publication price: publication not found. agencyPropertyId={}", id);
+                    log.error("Cannot update publication: publication not found. agencyPropertyId={}", id);
                     return new NotFoundException(ErrorCode.AGENCY_PROPERTY_NOT_FOUND, "Agency property not found");
                 });
 
+        if (ap.getDeleted()) {
+            log.error("Cannot update publication: publication is deleted. agencyPropertyId={}", id);
+            throw new NotFoundException(ErrorCode.AGENCY_PROPERTY_NOT_FOUND, "Agency property not found");
+        }
+
         if (!ap.getAgency().getAgencyId().equals(agencyId)) {
-            log.error("Rejecting publication price update: ownership mismatch. agencyPropertyId={}, requesterAgencyId={}, ownerAgencyId={}",
+            log.error("Rejecting publication update: ownership mismatch. agencyPropertyId={}, requesterAgencyId={}, ownerAgencyId={}",
                     id, agencyId, ap.getAgency().getAgencyId());
             throw new ForbiddenException(ErrorCode.CANNOT_MODIFY_OTHER_PUBLICATION, "Cannot modify another agency publication");
         }
@@ -161,15 +183,42 @@ public class AgencyPropertyService {
         validateListedPrice(dto);
 
         ap.setListedPrice(dto.getListedPrice().doubleValue());
+        pictureService.updateForListing(ap, dto.getImageUrl());
+        updatePropertyFields(ap.getProperty(), dto);
 
         AgencyPropertyResponseDTO response = toResponseWithImage(agencyPropertyRepository.save(ap));
-        log.info("Publication price updated successfully.");
+        log.info("Publication updated successfully");
         return response;
     }
 
+    private void updatePropertyFields(Property property, AgencyPropertyRequestDTO dto) {
+        boolean changed = Stream.of(
+                applyIfNotNull(dto.getPropertyType(), property::setPropertyType),
+                applyIfNotNull(dto.getAddress(),      property::setAddress),
+                applyIfNotNull(dto.getCity(),         property::setCity),
+                applyIfNotNull(dto.getProvince(),     property::setProvince),
+                applyIfNotNull(dto.getPrice(),        property::setPrice),
+                applyIfNotNull(dto.getAreaSq(),       property::setAreaSq),
+                applyIfNotNull(dto.getRooms(),        property::setRooms),
+                applyIfNotNull(dto.getDescription(),  property::setDescription)
+        ).anyMatch(Boolean::booleanValue);
+
+        if (changed) {
+            propertyRepository.save(property);
+            log.info("Property fields updated. propertyId={}", property.getPropertyId());
+        }
+    }
+
+    private <T> boolean applyIfNotNull(T value, Consumer<T> setter) {
+        if (value == null) return false;
+        setter.accept(value);
+        return true;
+    }
+
     /**
-     * Elimina una publicación por el id.
+     * Realiza el borrado lógico de una publicación por el id.
      * Solo la agencia propietaria puede eliminarla y únicamente si la propiedad no fue vendida.
+     * El registro se mantiene en la base de datos con el flag {@code deleted = true}.
      *
      * @param id identificador de la publicación a eliminar
      * @throws RuntimeException si la publicación no existe,
@@ -178,7 +227,7 @@ public class AgencyPropertyService {
      */
     public void delete(Integer id) {
         Integer agencyId = jwtAuthUtils.getCurrentId();
-        log.info("Deleting publication. agencyPropertyId={}, agencyId={}", id, agencyId);
+        log.info("Soft-deleting publication. agencyPropertyId={}, agencyId={}", id, agencyId);
 
         AgencyProperty ap = agencyPropertyRepository.findById(id)
                 .orElseThrow(() -> {
@@ -197,8 +246,9 @@ public class AgencyPropertyService {
             throw new ValidationException(ErrorCode.SOLD_PUBLICATION_CANNOT_BE_DELETED, "Cannot delete a sold publication");
         }
 
-        agencyPropertyRepository.delete(ap);
-        log.info("Publication deleted successfully. agencyPropertyId={}", id);
+        ap.setDeleted(true);
+        agencyPropertyRepository.save(ap);
+        log.info("Publication soft-deleted successfully. agencyPropertyId={}", id);
     }
 
     private void validateListedPrice(AgencyPropertyRequestDTO dto) {

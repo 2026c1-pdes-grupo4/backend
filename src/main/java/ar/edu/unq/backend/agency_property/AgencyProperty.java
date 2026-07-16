@@ -11,7 +11,7 @@ import java.time.LocalDate;
 @Setter
 @Getter
 @Entity
-@Table(name = "agency_property", uniqueConstraints = {@UniqueConstraint(columnNames = {"agency_id", "property_id"})})
+@Table(name = "agency_property")
 public class AgencyProperty {
 
     @Id
@@ -32,4 +32,7 @@ public class AgencyProperty {
 
     @Column(name = "listed_price", nullable = false)
     private Double listedPrice;
+
+    @Column(name = "deleted", nullable = false)
+    private Boolean deleted = false;
 }

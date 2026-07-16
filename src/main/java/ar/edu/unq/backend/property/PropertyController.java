@@ -1,6 +1,7 @@
 package ar.edu.unq.backend.property;
 
 import ar.edu.unq.backend.agency_property.AgencyPropertyResponseDTO;
+import ar.edu.unq.backend.common.dto.PagedResultDTO;
 import ar.edu.unq.backend.property.dto.PropertyRequestDTO;
 import ar.edu.unq.backend.property.dto.PropertyResponseDTO;
 import org.springframework.http.HttpStatus;
@@ -61,10 +62,17 @@ public class PropertyController {
 
     @GetMapping("/search")
     @PreAuthorize("isAuthenticated()")
-    public List<AgencyPropertyResponseDTO> search(@RequestParam(required = false) String city, @RequestParam(required = false) String province,
-                                            @RequestParam(required = false) String propertyType, @RequestParam(required = false) Integer rooms,
-                                            @RequestParam(required = false) BigDecimal priceMin, @RequestParam(required = false) BigDecimal priceMax,
-                                            @RequestParam(required = false) String keyword) {
-        return service.search(city, province, propertyType, rooms, priceMin, priceMax, keyword);
+    public PagedResultDTO<AgencyPropertyResponseDTO> search(
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) String province,
+            @RequestParam(required = false) String propertyType,
+            @RequestParam(required = false) Integer roomsMin,
+            @RequestParam(required = false) Integer roomsMax,
+            @RequestParam(required = false) BigDecimal priceMin,
+            @RequestParam(required = false) BigDecimal priceMax,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "0")  int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return service.search(city, province, propertyType, roomsMin, roomsMax, priceMin, priceMax, keyword, page, size);
     }
 }
