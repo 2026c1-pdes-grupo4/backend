@@ -54,7 +54,7 @@ public class AuthService {
             return authenticateUser(user.get(), req.password());
         }
 
-        var agency = agencyRepository.findByUsername(req.username())
+        var agency = agencyRepository.findByUsernameAndDeletedFalse(req.username())
                 .orElseThrow(() -> {
                     log.error("Login failed: username not found in users or agencies. username={}", req.username());
                     return new UnauthorizedException(ErrorCode.INVALID_CREDENTIALS, "Invalid credentials");

@@ -43,7 +43,7 @@ class AuthServiceTest {
         agency.setPassword("ENC");
 
         when(userRepository.findByUsername("inmo")).thenReturn(Optional.empty());
-        when(agencyRepository.findByUsername("inmo")).thenReturn(Optional.of(agency));
+        when(agencyRepository.findByUsernameAndDeletedFalse("inmo")).thenReturn(Optional.of(agency));
         when(encoder.matches("bad", "ENC")).thenReturn(false);
 
         assertThrows(UnauthorizedException.class, () -> authService.login(new LoginRequest("inmo", "bad")));
@@ -70,7 +70,7 @@ class AuthServiceTest {
     @Test
     void loginThrowsWhenNeitherUserNorAgencyExists() {
         when(userRepository.findByUsername("ghost")).thenReturn(Optional.empty());
-        when(agencyRepository.findByUsername("ghost")).thenReturn(Optional.empty());
+        when(agencyRepository.findByUsernameAndDeletedFalse("ghost")).thenReturn(Optional.empty());
 
         assertThrows(UnauthorizedException.class, () -> authService.login(new LoginRequest("ghost", "none")));
     }
@@ -83,7 +83,7 @@ class AuthServiceTest {
         agency.setPassword("ENC");
 
         when(userRepository.findByUsername("inmo1")).thenReturn(Optional.empty());
-        when(agencyRepository.findByUsername("inmo1")).thenReturn(Optional.of(agency));
+        when(agencyRepository.findByUsernameAndDeletedFalse("inmo1")).thenReturn(Optional.of(agency));
         when(encoder.matches("ok", "ENC")).thenReturn(true);
         when(jwtService.createToken(org.mockito.ArgumentMatchers.eq("inmo1"), org.mockito.ArgumentMatchers.anyMap()))
                 .thenReturn("TOKEN_AGENCY");
