@@ -34,25 +34,36 @@ API REST para **Compra Tu Hogar**.
 
 ## 🚀 Levantar el proyecto
 
-### Requisitos previos
+### ▶️ Opción A — Solo Docker
 
-- Docker Desktop instalado y corriendo
-- Java 21+
-- Maven 3.9+
+Solo necesitás **Docker Desktop** instalado y corriendo. No se requiere Java ni Maven.
 
-### 1. Compilar el JAR
+```bash
+docker compose -f docker-compose.prod.yml up -d
+```
+
+Docker descarga automáticamente la imagen publicada en GHCR y levanta la API junto con MySQL.
+
+
+### ▶️ Opción B — Desde el código fuente (desarrollo)
+
+Requiere Java 21+ y Maven 3.9+.
+
+**1. Compilar el JAR**
 
 ```bash
 mvn clean package -DskipTests
 ```
 
-### 2. Levantar app + base de datos
+**2. Levantar app + base de datos**
 
 ```bash
 docker compose up --build -d
 ```
 
-Servicios levantados:
+---
+
+Servicios levantados (ambas opciones):
 
 | Contenedor | Puerto | Descripción |
 |---|---|---|
@@ -61,6 +72,19 @@ Servicios levantados:
 
 La API queda disponible en `http://localhost:8080`  
 Swagger UI: `http://localhost:8080/swagger-ui.html`
+
+#### Usuarios de prueba
+
+| Rol | Usuario | Contraseña |
+|---|---|---|
+| Admin | `admin123` | `admin123` |
+| Admin | `karina` | `admin123` |
+| Buyer | `buyer1` | `buyer123` |
+| Buyer | `buyer2` | `buyer123` |
+| Agency | `inmo1` | `agency123` |
+| Agency | `inmo2` | `agency123` |
+| Agency | `ritondo_propiedades` | `agency123` |
+| Agency | `puerto_madero_brokers` | `agency123` |
 
 ---
 
@@ -181,7 +205,8 @@ Archivos Docker Compose:
 
 | Archivo | Propósito |
 |---|---|
-| `docker-compose.yml` | App + MySQL |
+| `docker-compose.prod.yml` |  usa imagen de GHCR, solo necesita Docker |
+| `docker-compose.yml` | Desarrollo local — construye la imagen desde el código fuente |
 | `docker-compose.observability.yml` | Prometheus + Grafana + Loki |
 
 ---
