@@ -109,12 +109,12 @@ const SEARCH_QUERIES = [
   '?city=Buenos+Aires',
   '?city=C%C3%B3rdoba&propertyType=HOUSE',
   '?province=Buenos+Aires',
-  '?rooms=3&priceMin=80000&priceMax=400000',
+  '?roomsMin=3&priceMin=80000&priceMax=400000',
   '?city=Rosario',
-  '?propertyType=APARTMENT&rooms=2',
+  '?propertyType=APARTMENT&roomsMax=2',
   '?priceMin=100000&priceMax=600000',
   '?keyword=spacious',
-  '?city=Buenos+Aires&propertyType=HOUSE&rooms=3',
+  '?city=Buenos+Aires&propertyType=HOUSE&roomsMin=3',
 ];
 
 // Setup: obtener todos los tokens
@@ -181,8 +181,8 @@ export function buyerFlow(data) {
     const res = http.get(`${BASE_URL}/properties/search${qs}`, { headers: h() });
     searchDuration.add(Date.now() - t0);
     const ok = check(res, {
-      '[Buyer Búsqueda] 200':       (r) => r.status === 200,
-      '[Buyer Búsqueda] es array':  (r) => { try { return Array.isArray(JSON.parse(r.body)); } catch { return false; } },
+      '[Buyer Búsqueda] 200':              (r) => r.status === 200,
+      '[Buyer Búsqueda] tiene content':     (r) => { try { return Array.isArray(JSON.parse(r.body).content); } catch { return false; } },
     });
     flowOk = flowOk && ok;
     if (res.status === 500) serverErrors.add(1);

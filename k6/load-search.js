@@ -24,9 +24,9 @@ const searchScenarios = [
   { city: 'Buenos Aires' },
   { province: 'Córdoba' },
   { propertyType: 'HOUSE' },
-  { rooms: 3 },
+  { roomsMin: 2, roomsMax: 4 },
   { priceMin: 50000, priceMax: 150000 },
-  { city: 'Buenos Aires', propertyType: 'HOUSE', rooms: 3 },
+  { city: 'Buenos Aires', propertyType: 'HOUSE', roomsMin: 3 },
   { keyword: 'spacious' },
 ];
 
@@ -58,7 +58,7 @@ export default function (data) {
 
   const ok = check(res, {
     'status es 200':             (r) => r.status === 200,
-    'respuesta es array':        (r) => Array.isArray(JSON.parse(r.body)),
+    'respuesta tiene content':   (r) => Array.isArray(JSON.parse(r.body).content),
   });
 
   errorRate.add(!ok);

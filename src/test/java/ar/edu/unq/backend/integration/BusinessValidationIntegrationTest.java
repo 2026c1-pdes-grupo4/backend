@@ -82,7 +82,7 @@ class BusinessValidationIntegrationTest extends BaseIntegrationTest {
 
         mockMvc.perform(get("/properties/search")
                         .param("propertyType", "HOUSE")
-                        .param("rooms", "3")
+                        .param("roomsMin", "3")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray());

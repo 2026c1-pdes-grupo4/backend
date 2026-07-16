@@ -57,9 +57,9 @@ const SEARCH_SCENARIOS = [
   { city: 'Buenos Aires' },
   { city: 'Córdoba', propertyType: 'HOUSE' },
   { province: 'Buenos Aires', propertyType: 'APARTMENT' },
-  { rooms: 3, priceMin: 80000, priceMax: 400000 },
+  { roomsMin: 3, priceMin: 80000, priceMax: 400000 },
   { city: 'Rosario' },
-  { propertyType: 'HOUSE', rooms: 2 },
+  { propertyType: 'HOUSE', roomsMin: 2 },
   { priceMin: 100000, priceMax: 500000 },
 ];
 
@@ -141,8 +141,8 @@ export default function (data) {
     searchDuration.add(Date.now() - t0);
 
     const ok = check(res, {
-      '[Búsqueda] status 200':       (r) => r.status === 200,
-      '[Búsqueda] resultado array':  (r) => { try { return Array.isArray(JSON.parse(r.body)); } catch { return false; } },
+      '[Búsqueda] status 200':          (r) => r.status === 200,
+      '[Búsqueda] resultado tiene content': (r) => { try { return Array.isArray(JSON.parse(r.body).content); } catch { return false; } },
     });
     flowOk = flowOk && ok;
   });

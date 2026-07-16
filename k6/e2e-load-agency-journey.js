@@ -273,8 +273,8 @@ export default function (data) {
     );
 
     check(res, {
-      '[Buscar Disponibles] status 200': (r) => r.status === 200,
-      '[Buscar Disponibles] es array':   (r) => { try { return Array.isArray(JSON.parse(r.body)); } catch { return false; } },
+      '[Buscar Disponibles] status 200':   (r) => r.status === 200,
+      '[Buscar Disponibles] tiene content': (r) => { try { return Array.isArray(JSON.parse(r.body).content); } catch { return false; } },
     });
   });
 
