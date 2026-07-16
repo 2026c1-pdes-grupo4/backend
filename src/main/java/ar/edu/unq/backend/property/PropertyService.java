@@ -150,7 +150,6 @@ public class PropertyService {
     public List<AgencyPropertyResponseDTO> search(String city, String province, String propertyType, Integer rooms,
             BigDecimal priceMin, BigDecimal priceMax, String keyword) {
 
-        // Normalizar strings: vacíos o blancos se tratan como sin filtro; los válidos se trimean
         city = normalizeString(city);
         province = normalizeString(province);
         keyword = normalizeString(keyword);
