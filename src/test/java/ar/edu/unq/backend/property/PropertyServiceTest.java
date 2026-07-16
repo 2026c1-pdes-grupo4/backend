@@ -343,7 +343,7 @@ class PropertyServiceTest {
         assertEquals(200000.0, result.getContent().get(0).getListedPrice());
         assertEquals("https://images.unsplash.com/photo-1", result.getContent().get(0).getImageUrl());
     }
-    
+
     @Test
     void createSetsAvailableTrue() {
         PropertyRequestDTO dto = new PropertyRequestDTO();
@@ -433,6 +433,24 @@ class PropertyServiceTest {
 
         assertThrows(ValidationException.class, () -> propertyService.delete(3));
         verify(propertyRepository, never()).delete(any(Property.class));
+    }
+
+    @Test
+    void findByCadastralReturnsMappedDtoWhenFound() {
+        Property entity = new Property();
+        when(propertyRepository.findByCircumscriptionAndSectionAndBlockAndParcel("1", "A", "10", "5"))
+                .thenReturn(java.util.Optional.of(entity));
+        when(propertyMapper.toResponse(entity)).thenReturn(new PropertyResponseDTO());
+
+        assertNotNull(propertyService.findByCadastral("1", "A", "10", "5"));
+    }
+
+    @Test
+    void findByCadastralThrowsWhenNoMatch() {
+        when(propertyRepository.findByCircumscriptionAndSectionAndBlockAndParcel("1", "A", "10", "5"))
+                .thenReturn(java.util.Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> propertyService.findByCadastral("1", "A", "10", "5"));
     }
 }
 

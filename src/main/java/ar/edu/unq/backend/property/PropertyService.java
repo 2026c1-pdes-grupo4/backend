@@ -225,6 +225,24 @@ public class PropertyService {
         return value.trim();
     }
 
+    /**
+     * Busca una propiedad existente por sus datos catastrales.
+     * Se usa para detectar duplicados antes de crear una propiedad nueva.
+     *
+     * @return la propiedad encontrada como DTO de respuesta
+     * @throws RuntimeException si no existe una propiedad con esos datos catastrales
+     */
+    public PropertyResponseDTO findByCadastral(String circumscription, String section, String block, String parcel) {
+        log.info("Looking up property by cadastral data.");
+        Property property = propertyRepository.findByCircumscriptionAndSectionAndBlockAndParcel(circumscription, section, block, parcel)
+                .orElseThrow(() -> {
+                    log.error("No property found for given cadastral data.");
+                    return new NotFoundException(ErrorCode.PROPERTY_NOT_FOUND, "Property not found");
+                });
+        log.info("Property found by cadastral data.");
+        return propertyMapper.toResponse(property);
+    }
+
     private PropertyType parsePropertyType(String propertyType) {
         if (propertyType == null || propertyType.isBlank()) {
             return null;
